@@ -17,6 +17,9 @@ import {
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 const cleanUrl = (url: string) => url.replace(/([^:]\/)\/+/g, "$1");
+const CAMP_TIME_ZONE = "Asia/Kolkata";
+const DEFAULT_MATCH_DATE = "2026-01-01T00:00:00.000Z";
+const COPYRIGHT_YEAR = "2026";
 
 interface SetScore {
   scoreA: number;
@@ -109,7 +112,7 @@ const normalizeMatchDetails = (value: unknown): MatchDetailsResponse | null => {
       teamB: stringValue(rawMatch.teamB),
       scoreA: numberValue(rawMatch.scoreA),
       scoreB: numberValue(rawMatch.scoreB),
-      date: stringValue(rawMatch.date) || new Date().toISOString(),
+      date: stringValue(rawMatch.date) || DEFAULT_MATCH_DATE,
       round: stringValue(rawMatch.round),
       status,
       winner: stringValue(rawMatch.winner),
@@ -145,7 +148,7 @@ const createFallbackData = (): MatchDetailsResponse => ({
     teamB: "",
     scoreA: 0,
     scoreB: 0,
-    date: new Date().toISOString(),
+    date: DEFAULT_MATCH_DATE,
     round: "",
     status: "upcoming",
     winner: "",
@@ -408,6 +411,7 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString("en-IN", {
+      timeZone: CAMP_TIME_ZONE,
       weekday: "long",
       day: "2-digit",
       month: "long",
@@ -684,7 +688,11 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
               <div className="border-t border-slate-100 mt-6 pt-4 text-center text-xs text-slate-500 space-y-1">
                 <p className="font-semibold flex items-center justify-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  {formatDate(match.date)}
+                  {showInitialLoading ? (
+                    <span className="animate-shimmer h-4 w-56 rounded bg-slate-200" />
+                  ) : (
+                    formatDate(match.date)
+                  )}
                 </p>
                 {match.notes && (
                   <p className="italic text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 max-w-lg mx-auto mt-2">

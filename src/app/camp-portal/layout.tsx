@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "defacto camp 2026",
   ].join(", "),
   alternates: {
-    canonical: "https://defacto-summer-camp.vercel.app/camp-portal",
+    canonical: "https://summercamp.defactoinstitute.in/camp-portal",
   },
   robots: {
     index: true,
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     title: "Camp Portal — Live Scores & Rankings | Defacto Summer Camp 2026",
     description:
       "Track live scores, player rankings, points tables, match results, and real-time camp updates for the Defacto Institute Summer Camp 2026 at Bhaniyawala.",
-    url: "https://defacto-summer-camp.vercel.app/camp-portal",
+    url: "https://summercamp.defactoinstitute.in/camp-portal",
     siteName: "Defacto Institute Summer Camp 2026",
     locale: "en_IN",
     type: "website",
@@ -56,13 +56,13 @@ export default function CampPortalLayout({ children }: { children: ReactNode }) 
     "@graph": [
       {
         "@type": "WebPage",
-        "@id": "https://defacto-summer-camp.vercel.app/camp-portal",
-        url: "https://defacto-summer-camp.vercel.app/camp-portal",
+        "@id": "https://summercamp.defactoinstitute.in/camp-portal",
+        url: "https://summercamp.defactoinstitute.in/camp-portal",
         name: "Camp Portal — Defacto Institute Summer Camp 2026",
         description:
           "Real-time camp portal for Defacto Institute Summer Camp 2026 featuring live scores, player rankings, points table, match results, attendance records, and updates.",
         isPartOf: {
-          "@id": "https://defacto-summer-camp.vercel.app",
+          "@id": "https://summercamp.defactoinstitute.in",
         },
         inLanguage: "en-IN",
         dateModified: new Date().toISOString(),
@@ -76,7 +76,7 @@ export default function CampPortalLayout({ children }: { children: ReactNode }) 
         endDate: "2026-07-04T22:00:00+05:30",
         eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
         eventStatus: "https://schema.org/EventScheduled",
-        url: "https://defacto-summer-camp.vercel.app/camp-portal",
+        url: "https://summercamp.defactoinstitute.in/camp-portal",
         location: {
           "@type": "Place",
           name: "Defacto Institute Bhaniyawala",
@@ -92,7 +92,7 @@ export default function CampPortalLayout({ children }: { children: ReactNode }) 
         organizer: {
           "@type": "EducationalOrganization",
           name: "Defacto Institute Bhaniyawala",
-          url: "https://defacto-summer-camp.vercel.app",
+          url: "https://summercamp.defactoinstitute.in",
         },
       },
     ],

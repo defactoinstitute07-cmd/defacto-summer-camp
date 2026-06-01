@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin/", "/admin", "/private/"],
     },
-    sitemap: "https://defacto-summer-camp.vercel.app/sitemap.xml",
+    sitemap: "https://summercamp.defactoinstitute.in/sitemap.xml",
   };
 }

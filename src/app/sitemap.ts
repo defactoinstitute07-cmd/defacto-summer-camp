@@ -3,7 +3,7 @@ import { MetadataRoute } from "next";
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://defacto-summer-camp.vercel.app";
+  const baseUrl = "https://summercamp.defactoinstitute.in";
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {

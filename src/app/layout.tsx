@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     "defacto institute"
   ].join(", "),
   alternates: {
-    canonical: "https://defacto-summer-camp.vercel.app",
+    canonical: "https://summercamp.defactoinstitute.in",
   },
   robots: {
     index: true,
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Defacto Institute Summer Camp 2026 | Camp & Registration Updates",
     description: "Learn, Play, Grow, and Compete at the ultimate summer sports camp. Follow our live camp updates, schedules, and matches at Defacto Institute Bhaniyawala.",
-    url: "https://defacto-summer-camp.vercel.app",
+    url: "https://summercamp.defactoinstitute.in",
     siteName: "Defacto Institute Summer Camp 2026",
     locale: "en_IN",
     type: "website",
@@ -91,11 +91,12 @@ export default function RootLayout({
     "organizer": {
       "@type": "EducationalOrganization",
       "name": "Defacto Institute Bhaniyawala",
-      "url": "https://defacto-summer-camp.vercel.app"
+      "url": "https://summercamp.defactoinstitute.in"
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://defacto-summer-camp.vercel.app",
+      "url": "https://summercamp.defactoinstitute.in",
+
       "price": "0",
       "priceCurrency": "INR",
       "availability": "https://schema.org/InStock",

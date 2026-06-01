@@ -87,6 +87,14 @@ const globalLimiter = rateLimit({
 });
 app.use("/api", globalLimiter);
 
+// ─── Root Route ──────────────────────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Welcome to Defacto Summer Camp API. Endpoint health check at /api/health",
+  });
+});
+
 // ─── Health Check ────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.status(200).json({

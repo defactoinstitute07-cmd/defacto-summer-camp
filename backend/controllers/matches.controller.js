@@ -203,7 +203,7 @@ exports.updateMatch = asyncHandler(async (req, res) => {
       timestamp: Date.now()
     });
 
-    io.to(`match_${match._id}`).emit("matchUpdated", match);
+    io.to(`match:${match._id}`).emit("matchUpdated", match);
     io.emit("scoreUpdated", match);
   }
 

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import {
@@ -11,7 +11,6 @@ import {
   Swords,
   Flag,
   AlertCircle,
-  Play,
   Pause,
   CheckCircle
 } from "lucide-react";
@@ -56,6 +55,124 @@ interface MatchDetailsResponse {
   teamBColor?: string;
 }
 
+interface GameSummary {
+  _id: string;
+  name: string;
+}
+
+const validStatuses: Match["status"][] = ["upcoming", "live", "paused", "completed"];
+
+const isRecord = (value: unknown): value is Record<string, unknown> => (
+  typeof value === "object" && value !== null
+);
+
+const stringValue = (value: unknown) => (
+  typeof value === "string" ? value : value == null ? "" : String(value)
+);
+
+const numberValue = (value: unknown) => (
+  typeof value === "number" && Number.isFinite(value) ? value : 0
+);
+
+const isGameSummary = (value: unknown): value is GameSummary => (
+  isRecord(value) &&
+  typeof value._id === "string" &&
+  typeof value.name === "string"
+);
+
+const normalizeMatchDetails = (value: unknown): MatchDetailsResponse | null => {
+  const payload = isRecord(value) && isRecord(value.match)
+    ? value
+    : isRecord(value) && isRecord(value.data) && isRecord(value.data.match)
+      ? value.data
+      : null;
+
+  if (!payload || !isRecord(payload.match)) return null;
+
+  const rawMatch = payload.match;
+  const matchId = stringValue(rawMatch._id);
+  if (!matchId) return null;
+
+  const rawStatus = stringValue(rawMatch.status) as Match["status"];
+  const status = validStatuses.includes(rawStatus) ? rawStatus : "upcoming";
+  const rawSets = Array.isArray(rawMatch.sets) ? rawMatch.sets : [];
+  const rawTimeline = Array.isArray(rawMatch.timeline) ? rawMatch.timeline : [];
+  const maxPoints = typeof rawMatch.maxPoints === "number" && Number.isFinite(rawMatch.maxPoints)
+    ? rawMatch.maxPoints
+    : undefined;
+
+  return {
+    match: {
+      _id: matchId,
+      sport: stringValue(rawMatch.sport),
+      teamA: stringValue(rawMatch.teamA),
+      teamB: stringValue(rawMatch.teamB),
+      scoreA: numberValue(rawMatch.scoreA),
+      scoreB: numberValue(rawMatch.scoreB),
+      date: stringValue(rawMatch.date) || new Date().toISOString(),
+      round: stringValue(rawMatch.round),
+      status,
+      winner: stringValue(rawMatch.winner),
+      notes: stringValue(rawMatch.notes),
+      sets: rawSets
+        .filter(isRecord)
+        .map((set) => ({
+          scoreA: numberValue(set.scoreA),
+          scoreB: numberValue(set.scoreB),
+        })),
+      timeline: rawTimeline
+        .filter(isRecord)
+        .map((event) => ({
+          scoreA: numberValue(event.scoreA),
+          scoreB: numberValue(event.scoreB),
+          text: stringValue(event.text),
+          time: stringValue(event.time),
+        })),
+      maxPoints,
+    },
+    teamALogo: stringValue(payload.teamALogo),
+    teamBLogo: stringValue(payload.teamBLogo),
+    teamAColor: stringValue(payload.teamAColor) || "#0B1C4A",
+    teamBColor: stringValue(payload.teamBColor) || "#0B1C4A",
+  };
+};
+
+const createFallbackData = (): MatchDetailsResponse => ({
+  match: {
+    _id: "",
+    sport: "",
+    teamA: "",
+    teamB: "",
+    scoreA: 0,
+    scoreB: 0,
+    date: new Date().toISOString(),
+    round: "",
+    status: "upcoming",
+    winner: "",
+    notes: "",
+    sets: [],
+    timeline: []
+  },
+  teamALogo: "",
+  teamBLogo: "",
+  teamAColor: "#0B1C4A",
+  teamBColor: "#0B1C4A"
+});
+
+const getSocketUrl = () => cleanUrl(API.replace(/\/api\/?$/, ""));
+
+const shouldUseSocket = (socketUrl: string) => {
+  if (process.env.NEXT_PUBLIC_DISABLE_SOCKET_IO === "true") return false;
+  if (process.env.NEXT_PUBLIC_ENABLE_SOCKET_IO === "true") return true;
+
+  try {
+    const { hostname } = new URL(socketUrl);
+    return !hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+};
+
 // Exponential backoff fetch utility for API resilience
 async function fetchWithBackoff(
   url: string,
@@ -91,8 +208,8 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
 
   const logContainerRef = useRef<HTMLDivElement | null>(null);
   const disconnectedAtRef = useRef<number | null>(null);
-  const pollingRef        = useRef<NodeJS.Timeout | null>(null);
-  const graceTimerRef     = useRef<NodeJS.Timeout | null>(null);
+  const pollingRef        = useRef<ReturnType<typeof setInterval> | null>(null);
+  const graceTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-scroll play logs on update
   useEffect(() => {
@@ -101,55 +218,66 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
     }
   }, [data?.match?.timeline]);
 
-  const stopPolling = () => {
+  const stopPolling = useCallback(() => {
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
-  };
+  }, []);
 
-  const startPolling = () => {
-    if (pollingRef.current) return;
-    setConnectionStatus('delayed');
-    pollingRef.current = setInterval(async () => {
-      try {
-        const res = await fetchWithBackoff(cleanUrl(`${API}/matches/${matchId}`));
-        if (res.status === 429) {
-          stopPolling();
-          return;
-        }
-        const d = await res.json();
-        if (d.success && d.data) {
-          setData(d.data);
-        }
-      } catch (err) {
-        console.error('[Polling] fetch error:', err);
-      }
-    }, 30000); // 30s poll interval
-  };
-
-  const fetchDetails = async () => {
+  const fetchDetails = useCallback(async (quiet = false) => {
     try {
       const res = await fetchWithBackoff(cleanUrl(`${API}/matches/${matchId}`));
-      if (!res.ok) throw new Error("Match details could not be retrieved.");
-      const d = await res.json();
-      if (d.success && d.data) {
-        setData(d.data);
+      const d = await res.json().catch(() => null);
+      if (!res.ok || !d?.success) {
+        throw new Error(d?.message || "Match details could not be retrieved.");
       }
-    } catch (err: any) {
-      setError(err.message || "Error retrieving details");
+
+      const nextData = normalizeMatchDetails(d.data);
+      if (!nextData) throw new Error("Match details are unavailable.");
+
+      setData(nextData);
+      setError("");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error retrieving details";
+      if (!quiet) setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [matchId]);
+
+  const startPolling = useCallback((runImmediately = false) => {
+    setConnectionStatus("delayed");
+    if (runImmediately) void fetchDetails(true);
+    if (pollingRef.current) return;
+
+    pollingRef.current = setInterval(() => {
+      void fetchDetails(true);
+    }, 30000); // 30s poll interval
+  }, [fetchDetails]);
 
   // Set up Socket.IO connection and fallbacks
   useEffect(() => {
-    fetchDetails();
+    const initialFetchTimer = setTimeout(() => {
+      void fetchDetails();
+    }, 0);
 
-    const socketUrl = API.replace(/\/api\/?$/, "");
+    const socketUrl = getSocketUrl();
+    if (!shouldUseSocket(socketUrl)) {
+      const pollingStartTimer = setTimeout(() => {
+        startPolling();
+      }, 0);
+
+      return () => {
+        clearTimeout(initialFetchTimer);
+        clearTimeout(pollingStartTimer);
+        stopPolling();
+      };
+    }
+
     const socket = io(socketUrl, {
       transports: ["websocket", "polling"],
+      timeout: 5000,
     });
 
     socket.on("connect", () => {
@@ -160,6 +288,10 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
       stopPolling();
       setConnectionStatus('live');
       socket.emit('rejoin-match', matchId);
+    });
+
+    socket.on("connect_error", () => {
+      startPolling(true);
     });
 
     socket.on("disconnect", () => {
@@ -173,51 +305,83 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
       }, 10000);
     });
 
-    socket.on("matchState", (serverData: any) => {
-      if (serverData) {
-        setData(serverData);
-        setLoading(false);
-      }
+    socket.on("matchState", (serverData: unknown) => {
+      const nextData = normalizeMatchDetails(serverData);
+      if (!nextData) return;
+      setData(nextData);
+      setError("");
+      setLoading(false);
     });
 
-    socket.on("matchUpdated", (updatedMatch: Match) => {
+    socket.on("matchUpdated", (updatedMatch: unknown) => {
+      const nextData = normalizeMatchDetails({ match: updatedMatch });
+      if (!nextData) {
+        void fetchDetails(true);
+        return;
+      }
+
       setData((prev) => {
-        if (!prev) return null;
+        if (!prev?.match) return prev;
         return {
           ...prev,
-          match: updatedMatch,
+          match: nextData.match,
         };
       });
     });
 
-    socket.on("scoreUpdate", (payload: any) => {
-      if (payload.matchId === matchId && payload.score) {
-        setData((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            match: {
-              ...prev.match,
-              scoreA: payload.score.scoreA,
-              scoreB: payload.score.scoreB,
-              status: payload.score.status,
-              winner: payload.score.winner,
-              sets: payload.score.sets || prev.match.sets,
-              timeline: payload.score.timeline || prev.match.timeline
-            }
-          };
-        });
-      }
+    socket.on("scoreUpdate", (payload: unknown) => {
+      if (!isRecord(payload) || payload.matchId !== matchId || !isRecord(payload.score)) return;
+
+      const score = payload.score;
+      setData((prev) => {
+        if (!prev?.match) return prev;
+        const rawStatus = stringValue(score.status) as Match["status"];
+        const status = validStatuses.includes(rawStatus) ? rawStatus : prev.match.status;
+        const scoreA = typeof score.scoreA === "number" ? score.scoreA : prev.match.scoreA;
+        const scoreB = typeof score.scoreB === "number" ? score.scoreB : prev.match.scoreB;
+        const sets = Array.isArray(score.sets)
+          ? score.sets
+            .filter(isRecord)
+            .map((set) => ({
+              scoreA: numberValue(set.scoreA),
+              scoreB: numberValue(set.scoreB),
+            }))
+          : prev.match.sets;
+        const timeline = Array.isArray(score.timeline)
+          ? score.timeline
+            .filter(isRecord)
+            .map((event) => ({
+              scoreA: numberValue(event.scoreA),
+              scoreB: numberValue(event.scoreB),
+              text: stringValue(event.text),
+              time: stringValue(event.time),
+            }))
+          : prev.match.timeline;
+
+        return {
+          ...prev,
+          match: {
+            ...prev.match,
+            scoreA,
+            scoreB,
+            status,
+            winner: stringValue(score.winner) || prev.match.winner,
+            sets,
+            timeline
+          }
+        };
+      });
     });
 
     return () => {
+      clearTimeout(initialFetchTimer);
       stopPolling();
       if (graceTimerRef.current) {
         clearTimeout(graceTimerRef.current);
       }
       socket.disconnect();
     };
-  }, [matchId]);
+  }, [fetchDetails, matchId, startPolling, stopPolling]);
 
   // Fetch games list to link back to the sport details page
   useEffect(() => {
@@ -227,7 +391,7 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
       .then((resData) => {
         if (resData.success && Array.isArray(resData.data)) {
           const game = resData.data.find(
-            (g: any) => g.name.toLowerCase() === data.match.sport.toLowerCase()
+            (g: unknown) => isGameSummary(g) && g.name.toLowerCase() === data.match.sport.toLowerCase()
           );
           if (game) setGameId(game._id);
         }
@@ -235,27 +399,9 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
       .catch((err) => console.warn("Failed to retrieve games list:", err));
   }, [data?.match?.sport]);
 
-  const { match, teamALogo, teamBLogo, teamAColor, teamBColor } = data || {
-    match: {
-      _id: "",
-      sport: "",
-      teamA: "",
-      teamB: "",
-      scoreA: 0,
-      scoreB: 0,
-      date: new Date().toISOString(),
-      round: "",
-      status: "upcoming" as const,
-      winner: "",
-      notes: "",
-      sets: [],
-      timeline: []
-    },
-    teamALogo: "",
-    teamBLogo: "",
-    teamAColor: "#0B1C4A",
-    teamBColor: "#0B1C4A"
-  };
+  const safeData = data?.match ? data : createFallbackData();
+  const { match, teamALogo, teamBLogo, teamAColor, teamBColor } = safeData;
+  const showInitialLoading = loading && !data?.match;
   const colorA = teamAColor || "#0B1C4A";
   const colorB = teamBColor || "#0B1C4A";
 
@@ -271,6 +417,34 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
       hour12: true,
     });
   };
+
+  if (!showInitialLoading && !data?.match) {
+    return (
+      <main className="min-h-screen bg-slate-50 pt-8 pb-12 font-sans">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-[#E60000] rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 shadow-sm cursor-pointer group active:scale-95"
+          >
+            <ChevronLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
+            Back
+          </button>
+
+          <section className="mt-6 bg-white border border-red-100 rounded-3xl p-8 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+            </div>
+            <h1 className="text-lg font-black uppercase tracking-wider text-slate-900">
+              Match unavailable
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              {error || "Match details could not be loaded. Please try again shortly."}
+            </p>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 pt-8 pb-12 font-sans">
@@ -514,7 +688,7 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
                 </p>
                 {match.notes && (
                   <p className="italic text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 max-w-lg mx-auto mt-2">
-                    "{match.notes}"
+                    {`"${match.notes}"`}
                   </p>
                 )}
               </div>

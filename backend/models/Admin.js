@@ -4,19 +4,29 @@ const adminSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: [true, "Username is required"],
-      unique: true,
       trim: true,
       minlength: [3, "Username must be at least 3 characters"],
       maxlength: [30, "Username cannot exceed 30 characters"],
+      unique: true,
+      sparse: true,
     },
     email: {
       type: String,
-      required: [true, "Email is required"],
-      unique: true,
       lowercase: true,
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
+      unique: true,
+      sparse: true,
+    },
+    fullName: {
+      type: String,
+      trim: true,
+    },
+    mobileNumber: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true,
     },
     password: {
       type: String,
@@ -28,6 +38,15 @@ const adminSchema = new mongoose.Schema(
       type: String,
       enum: ["admin", "superadmin"],
       default: "admin",
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "suspended"],
+      default: "pending",
+    },
+    sportsPermissions: {
+      type: [String],
+      default: [],
     },
     lastLogin: {
       type: Date,

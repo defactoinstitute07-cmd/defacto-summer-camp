@@ -41,7 +41,7 @@ const matchSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["upcoming", "live", "completed"],
+      enum: ["upcoming", "live", "paused", "completed"],
       default: "upcoming",
     },
     winner: {
@@ -49,17 +49,52 @@ const matchSchema = new mongoose.Schema(
       trim: true,
       default: "", // "teamA" | "teamB" | "draw" | ""
     },
+    maxPoints: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     notes: {
       type: String,
       trim: true,
       maxlength: [300, "Notes cannot exceed 300 characters"],
       default: "",
     },
+    sets: [
+      {
+        scoreA: { type: Number, default: 0 },
+        scoreB: { type: Number, default: 0 },
+      },
+    ],
+    timeline: [
+      {
+        scoreA: { type: Number, default: 0 },
+        scoreB: { type: Number, default: 0 },
+        text: { type: String, default: "" },
+        time: { type: String, default: "" },
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
+
+matchSchema.pre("save", function (next) {
+  if (this.maxPoints > 0) {
+    if (this.scoreA >= this.maxPoints || this.scoreB >= this.maxPoints) {
+      this.status = "completed";
+      if (this.scoreA > this.scoreB) {
+        this.winner = "teamA";
+      } else if (this.scoreB > this.scoreA) {
+        this.winner = "teamB";
+      } else {
+        this.winner = "draw";
+      }
+    }
+  }
+  next();
+});
 
 matchSchema.index({ status: 1 });
 matchSchema.index({ sport: 1, date: -1 });

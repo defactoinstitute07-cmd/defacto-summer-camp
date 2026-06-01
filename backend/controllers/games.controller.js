@@ -2,10 +2,26 @@ const Game = require("../models/Game");
 const Match = require("../models/Match");
 const PointsEntry = require("../models/PointsEntry");
 const Player = require("../models/Player");
+const Team = require("../models/Team");
 const cloudinary = require("../config/cloudinary");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendSuccess, sendError } = require("../utils/apiResponse");
 const { validationResult } = require("express-validator");
+
+const sortMatches = (list) => {
+  const getRank = (status) => {
+    if (status === "upcoming") return 1;
+    if (status === "live" || status === "paused") return 2;
+    if (status === "completed") return 3;
+    return 4;
+  };
+  return [...list].sort((a, b) => {
+    const rA = getRank(a.status);
+    const rB = getRank(b.status);
+    if (rA !== rB) return rA - rB;
+    return new Date(a.date).getTime() - new Date(b.date).getTime();
+  });
+};
 
 // GET /api/games
 exports.getAllGames = asyncHandler(async (req, res) => {
@@ -21,23 +37,27 @@ exports.getGame = asyncHandler(async (req, res) => {
 });
 
 // GET /api/games/:id/details
-// Fetches game along with matches, rankings (PointsEntry), and players in a single API call
+// Fetches game along with matches, rankings (PointsEntry), players, and teams in a single API call
 exports.getGameDetails = asyncHandler(async (req, res) => {
   const game = await Game.findById(req.params.id);
   if (!game) return sendError(res, 404, "Game not found.");
 
-  // Fetch matches, points entries, and players matching the game name
-  const [matches, pointsTable, players] = await Promise.all([
-    Match.find({ sport: game.name }).sort({ date: -1 }),
+  // Fetch matches, points entries, players, and teams matching the game name
+  const [rawMatches, pointsTable, players, teams] = await Promise.all([
+    Match.find({ sport: game.name }),
     PointsEntry.find({ sport: game.name }).sort({ rank: 1, points: -1 }),
     Player.find({ sport: game.name, isActive: true }).sort({ name: 1 }),
+    Team.find({ sport: game.name }).populate("captain", "name profileImageUrl"),
   ]);
+
+  const matches = sortMatches(rawMatches);
 
   sendSuccess(res, 200, "Game details retrieved successfully", {
     game,
     matches,
     pointsTable,
     players,
+    teams,
   });
 });
 

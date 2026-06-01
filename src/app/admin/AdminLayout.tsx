@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useAdminAuth } from "./context/AdminAuthContext";
 import {
   LayoutDashboard, Users, UserCheck, Trophy, CalendarCheck,
-  Megaphone, Image, Shield, LogOut, Menu, X, Swords, ChevronRight, Gamepad2
+  Megaphone, Image, Shield, LogOut, Menu, X, Swords, ChevronRight, Gamepad2, Flag
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
   { label: "Dashboard",     href: "/admin",               icon: LayoutDashboard },
   { label: "Games",         href: "/admin/games",         icon: Gamepad2 },
+  { label: "Teams",         href: "/admin/teams",         icon: Flag },
   { label: "Organizers",    href: "/admin/organizers",    icon: Shield },
   { label: "Volunteers",    href: "/admin/volunteers",    icon: Users },
   { label: "Players",       href: "/admin/players",       icon: UserCheck },
@@ -59,7 +60,56 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.replace("/admin/login");
   };
 
-  const currentPage = navItems.find(
+  // Block pending or suspended admins from accessing any page content
+  if (admin && admin.role === "admin" && admin.status !== "approved") {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 font-sans relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#E60000]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#0B1C4A]/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+        
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center w-full max-w-md shadow-2xl relative z-10">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto mb-6">
+            <Shield className="w-8 h-8 text-amber-500 animate-pulse" />
+          </div>
+          
+          <h2 className="text-xl font-display font-black text-slate-800 uppercase mb-3">
+            {admin.status === "pending" ? "Approval Pending" : admin.status === "suspended" ? "Account Suspended" : "Access Denied"}
+          </h2>
+          
+          <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">
+            {admin.status === "pending" 
+              ? "Your account is pending approval. Please wait for Super Admin approval." 
+              : admin.status === "suspended"
+              ? "Your account has been suspended. Please contact the Super Admin."
+              : "Your registration request has been rejected. Please contact the Super Admin."}
+          </p>
+          
+          <button
+            onClick={handleLogout}
+            className="w-full py-3 bg-[#E60000] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Filter navigation tabs dynamically based on user role
+  const allowedNavItems = admin?.role === "superadmin"
+    ? [
+        ...navItems,
+        { label: "User Management", href: "/admin/admins", icon: Users }
+      ]
+    : navItems.filter(item => 
+        item.href === "/admin" || 
+        item.href === "/admin/matches" ||
+        item.href === "/admin/teams" ||
+        item.href === "/admin/players" ||
+        item.href === "/admin/points"
+      );
+
+  const currentPage = allowedNavItems.find(
     n => n.href === pathname || (n.href !== "/admin" && pathname.startsWith(n.href))
   );
 
@@ -84,6 +134,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         transition-transform duration-300
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0 lg:static lg:z-auto lg:shadow-none
+        ${admin?.role === "admin" ? "hidden lg:flex" : "flex"}
       `}>
         {/* Brand Logo */}
         <div className="px-6 py-5 border-b border-slate-100">
@@ -100,7 +151,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Nav */}
         <nav className="flex-1 py-4 overflow-y-auto px-3">
-          {navItems.map(({ label, href, icon: Icon }) => {
+          {allowedNavItems.map(({ label, href, icon: Icon }) => {
             const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
             return (
               <Link
@@ -127,10 +178,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="px-4 py-4 border-t border-slate-100">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 mb-3">
             <div className="w-8 h-8 rounded-full bg-[#E60000] flex items-center justify-center text-white text-xs font-black flex-shrink-0">
-              {admin?.username?.[0]?.toUpperCase()}
+              {(admin?.fullName || admin?.username || "?")?.[0]?.toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-slate-900 text-sm font-bold truncate">{admin?.username}</p>
+              <p className="text-slate-900 text-sm font-bold truncate">
+                {admin?.fullName || admin?.username}
+              </p>
               <p className="text-slate-400 text-xs capitalize">{admin?.role}</p>
             </div>
           </div>
@@ -147,12 +200,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header className={`sticky top-0 z-20 bg-white/80 backdrop-blur-md px-4 sm:px-6 py-4 flex items-center gap-4 transition-all duration-300 ${scrolled ? "border-b border-slate-200/70 shadow-sm shadow-slate-100" : "border-b border-slate-100"}`}>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          {admin?.role !== "admin" && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
 
           <div className="flex-1">
             <h1 className="text-slate-900 font-black text-lg tracking-tight">
@@ -173,10 +228,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">
+        <main className={`flex-1 p-4 sm:p-6 overflow-auto ${admin?.role === "admin" ? "pb-24 lg:pb-6" : ""}`}>
           {children}
         </main>
       </div>
+
+      {/* ── Bottom Navigation Bar for Mobile Game Admins ── */}
+      {admin?.role === "admin" && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200/80 px-4 py-2 z-30 flex justify-around items-center shadow-lg shadow-slate-300/50 pb-safe">
+          {allowedNavItems.map(({ label, href, icon: Icon }) => {
+            const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
+            return (
+              <Link
+                key={href} href={href}
+                className={`
+                  flex flex-col items-center gap-1 py-1 px-2 rounded-2xl transition-all duration-200
+                  ${active ? "text-[#E60000] scale-105 font-bold" : "text-slate-400 hover:text-slate-700"}
+                `}
+              >
+                <div className={`p-1.5 rounded-xl transition-all ${active ? "bg-red-50 text-[#E60000]" : "text-slate-400"}`}>
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                </div>
+                <span className="text-[10px] font-bold tracking-tight">{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

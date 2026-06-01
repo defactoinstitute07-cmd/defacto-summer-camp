@@ -33,6 +33,7 @@ const seed = async () => {
     email: SEED_ADMIN_EMAIL,
     password: passwordHash,
     role: "superadmin",
+    status: "approved",
   });
 
   console.log(`✅ Superadmin created:`);

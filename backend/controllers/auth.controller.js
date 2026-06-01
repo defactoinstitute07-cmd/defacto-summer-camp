@@ -42,12 +42,18 @@ exports.login = asyncHandler(async (req, res) => {
 
   const { email, password } = req.body;
 
-  // Get admin with password field
-  const admin = await Admin.findOne({ email, isActive: true }).select("+password");
-  if (!admin) return sendError(res, 401, "Invalid email or password.");
+  // Get admin with password field (by email or mobile number)
+  let admin;
+  if (email.includes("@")) {
+    admin = await Admin.findOne({ email, isActive: true }).select("+password");
+  } else {
+    admin = await Admin.findOne({ mobileNumber: email, isActive: true }).select("+password");
+  }
+
+  if (!admin) return sendError(res, 401, "Invalid credentials.");
 
   const isMatch = await bcrypt.compare(password, admin.password);
-  if (!isMatch) return sendError(res, 401, "Invalid email or password.");
+  if (!isMatch) return sendError(res, 401, "Invalid credentials.");
 
   // Update last login
   admin.lastLogin = new Date();
@@ -119,4 +125,111 @@ exports.deleteAdmin = asyncHandler(async (req, res) => {
 
   await Admin.findByIdAndDelete(req.params.id);
   sendSuccess(res, 200, "Admin account deleted.");
+});
+
+// POST /api/auth/register-game-admin
+exports.registerGameAdmin = asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return sendError(res, 400, "Validation failed", errors.array());
+
+  const { fullName, mobileNumber, password } = req.body;
+
+  // Check if mobileNumber already exists
+  const existing = await Admin.findOne({ mobileNumber });
+  if (existing) {
+    return sendError(res, 400, "An account with this mobile number already exists.");
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  const admin = await Admin.create({
+    fullName,
+    mobileNumber,
+    password: passwordHash,
+    role: "admin",
+    status: "pending",
+  });
+
+  sendSuccess(res, 201, "Registration request submitted. Please wait for approval.", admin);
+});
+
+// PUT /api/auth/admins/:id (superadmin only)
+exports.updateAdmin = asyncHandler(async (req, res) => {
+  const admin = await Admin.findById(req.params.id);
+  if (!admin) return sendError(res, 404, "Admin not found.");
+
+  const { fullName, mobileNumber, status, sportsPermissions, username, email, role } = req.body;
+
+  // Uniqueness & validation checks
+  if (username !== undefined) {
+    if (username.trim() === "") {
+      admin.username = undefined;
+    } else {
+      if (username.length < 3) {
+        return sendError(res, 400, "Username must be at least 3 characters.");
+      }
+      const existing = await Admin.findOne({ username, _id: { $ne: admin._id } });
+      if (existing) return sendError(res, 400, "Username is already in use.");
+      admin.username = username;
+    }
+  }
+
+  if (email !== undefined) {
+    if (email.trim() === "") {
+      admin.email = undefined;
+    } else {
+      const emailRegex = /^\S+@\S+\.\S+$/;
+      if (!emailRegex.test(email)) {
+        return sendError(res, 400, "Please provide a valid email.");
+      }
+      const existing = await Admin.findOne({ email, _id: { $ne: admin._id } });
+      if (existing) return sendError(res, 400, "Email is already in use.");
+      admin.email = email;
+    }
+  }
+
+  if (mobileNumber !== undefined) {
+    if (mobileNumber.trim() === "") {
+      admin.mobileNumber = undefined;
+    } else {
+      const existing = await Admin.findOne({ mobileNumber, _id: { $ne: admin._id } });
+      if (existing) return sendError(res, 400, "Mobile number is already in use.");
+      admin.mobileNumber = mobileNumber;
+    }
+  }
+
+  if (fullName !== undefined) admin.fullName = fullName;
+  if (sportsPermissions !== undefined) admin.sportsPermissions = sportsPermissions;
+
+  // Safety checks if updating own account
+  if (admin._id.toString() === req.admin._id.toString()) {
+    if (status !== undefined && status !== "approved") {
+      return sendError(res, 400, "You cannot suspend, reject, or set your own account to pending.");
+    }
+    if (role !== undefined && role !== "superadmin") {
+      return sendError(res, 400, "You cannot change your own role from superadmin.");
+    }
+  } else {
+    if (status !== undefined) admin.status = status;
+    if (role !== undefined) admin.role = role;
+  }
+
+  await admin.save();
+  sendSuccess(res, 200, "Admin details updated.", admin);
+});
+
+// PUT /api/auth/admins/:id/reset-password (superadmin only)
+exports.resetAdminPassword = asyncHandler(async (req, res) => {
+  const admin = await Admin.findById(req.params.id);
+  if (!admin) return sendError(res, 404, "Admin not found.");
+
+  const { password } = req.body;
+  if (!password || password.length < 8) {
+    return sendError(res, 400, "Password must be at least 8 characters.");
+  }
+
+  admin.password = await bcrypt.hash(password, 12);
+  await admin.save({ validateBeforeSave: false });
+
+  sendSuccess(res, 200, "Password reset successfully.");
 });

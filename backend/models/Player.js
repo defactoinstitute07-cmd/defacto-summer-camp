@@ -1,16 +1,5 @@
 const mongoose = require("mongoose");
 
-const SPORTS = [
-  "Badminton",
-  "Volleyball",
-  "Quiz Competition",
-  "Cultural Activities",
-  "Painting",
-  "TUG-OF-WAR",
-  "Fun Activities",
-  "General",
-];
-
 const playerSchema = new mongoose.Schema(
   {
     name: {
@@ -26,14 +15,19 @@ const playerSchema = new mongoose.Schema(
     },
     sport: {
       type: String,
-      enum: SPORTS,
       required: [true, "Sport/activity is required"],
+      trim: true,
     },
     team: {
       type: String,
       trim: true,
       maxlength: [80, "Team name cannot exceed 80 characters"],
       default: "",
+    },
+    teamRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      default: null,
     },
     profileImageUrl: {
       type: String,
@@ -63,4 +57,3 @@ playerSchema.index({ name: "text" }); // Full-text search on name
 
 const Player = mongoose.model("Player", playerSchema);
 module.exports = Player;
-module.exports.SPORTS = SPORTS;

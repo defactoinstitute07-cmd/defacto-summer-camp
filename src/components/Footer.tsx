@@ -130,7 +130,7 @@ export default function Footer() {
             <div className="space-y-3 text-sm">
               <div className="bg-slate-900 border border-white/5 rounded-xl p-4">
                 <p className="text-white font-bold mb-1">Camp Dates:</p>
-                <p className="text-green-500 font-semibold">June 1 - July 4, 2026</p>
+                <p className="text-green-500 font-semibold">June 2 - July 4, 2026</p>
               </div>
               <div className="bg-slate-900 border border-white/5 rounded-xl p-4">
                 <p className="text-white font-bold mb-1">Timings:</p>

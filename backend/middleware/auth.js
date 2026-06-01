@@ -41,4 +41,30 @@ const protect = asyncHandler(async (req, res, next) => {
   next();
 });
 
-module.exports = { protect };
+const optionalProtect = asyncHandler(async (req, res, next) => {
+  let token;
+
+  // 1. Check Authorization header
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+  // 2. Fallback: check httpOnly cookie
+  else if (req.cookies && req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const admin = await Admin.findById(decoded.id).select("-password");
+      if (admin) {
+        req.admin = admin;
+      }
+    } catch (err) {
+      // Ignore invalid tokens for optional authentication
+    }
+  }
+  next();
+});
+
+module.exports = { protect, optionalProtect };

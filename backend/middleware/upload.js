@@ -115,6 +115,9 @@ const galleryUpload = {
 const gameUpload = {
   single: (field = "image") => makeCloudinaryUploader("games", field),
 };
+const teamUpload = {
+  single: (field = "logo") => makeCloudinaryUploader("teams", field),
+};
 
 module.exports = {
   organizerUpload,
@@ -122,5 +125,6 @@ module.exports = {
   playerUpload,
   galleryUpload,
   gameUpload,
+  teamUpload,
   streamToCloudinary,
 };

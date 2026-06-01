@@ -2,7 +2,7 @@ const express = require("express");
 const { body } = require("express-validator");
 const router = express.Router();
 const ctrl = require("../controllers/points.controller");
-const { protect } = require("../middleware/auth");
+const { protect, optionalProtect } = require("../middleware/auth");
 
 const validation = [
   body("sport").notEmpty().withMessage("Sport is required."),
@@ -16,8 +16,8 @@ const validation = [
 ];
 
 // Public
-router.get("/", ctrl.getAllPoints);
-router.get("/sport/:sport", ctrl.getPointsBySport);
+router.get("/", optionalProtect, ctrl.getAllPoints);
+router.get("/sport/:sport", optionalProtect, ctrl.getPointsBySport);
 
 // Protected
 router.post("/", protect, validation, ctrl.createEntry);

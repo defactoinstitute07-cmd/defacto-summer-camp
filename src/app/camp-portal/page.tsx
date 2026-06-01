@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { SportsCardSkeleton } from "@/components/Skeletons";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Flame, Award, Calendar, ChevronRight, Activity, Zap, PlayCircle, CheckCircle } from "lucide-react";
 import * as Icons from "lucide-react";
@@ -126,8 +127,10 @@ export default function CampPortalPage() {
 
           {/* Games Output */}
           {loading ? (
-            <div className="flex justify-center py-20">
-              <div className="w-10 h-10 border-4 border-[#E60000] border-t-transparent rounded-full animate-spin" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(6)].map((_, idx) => (
+                <SportsCardSkeleton key={idx} />
+              ))}
             </div>
           ) : error ? (
             <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl text-center max-w-md mx-auto">

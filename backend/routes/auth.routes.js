@@ -16,7 +16,7 @@ const loginLimiter = rateLimit({
 });
 
 const loginValidation = [
-  body("email").isEmail().withMessage("Valid email required.").normalizeEmail(),
+  body("email").notEmpty().withMessage("Email or Mobile Number is required."),
   body("password").notEmpty().withMessage("Password is required."),
 ];
 
@@ -34,14 +34,23 @@ const createAdminValidation = [
   body("role").optional().isIn(["admin", "superadmin"]).withMessage("Role must be admin or superadmin."),
 ];
 
+const registerGameAdminValidation = [
+  body("fullName").notEmpty().withMessage("Full name is required."),
+  body("mobileNumber").notEmpty().withMessage("Mobile number is required."),
+  body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters."),
+];
+
 router.post("/login", loginLimiter, loginValidation, ctrl.login);
 router.get("/me", protect, ctrl.getMe);
 router.post("/logout", protect, ctrl.logout);
 router.post("/change-password", protect, changePasswordValidation, ctrl.changePassword);
+router.post("/register-game-admin", registerGameAdminValidation, ctrl.registerGameAdmin);
 
 // Superadmin-only
 router.post("/admins", protect, restrictTo("superadmin"), createAdminValidation, ctrl.createAdmin);
 router.get("/admins", protect, restrictTo("superadmin"), ctrl.getAllAdmins);
+router.put("/admins/:id", protect, restrictTo("superadmin"), ctrl.updateAdmin);
+router.put("/admins/:id/reset-password", protect, restrictTo("superadmin"), ctrl.resetAdminPassword);
 router.delete("/admins/:id", protect, restrictTo("superadmin"), ctrl.deleteAdmin);
 
 module.exports = router;

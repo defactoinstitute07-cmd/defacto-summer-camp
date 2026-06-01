@@ -13,6 +13,18 @@ exports.getAllPlayers = asyncHandler(async (req, res) => {
   if (active !== undefined) filter.isActive = active === "true";
   if (search) filter.$text = { $search: search };
 
+  if (req.admin && req.admin.role === "admin") {
+    if (req.admin.status !== "approved") {
+      return sendError(res, 403, "Access denied. Your account is pending or suspended.");
+    }
+    if (sport) {
+      const hasPerm = req.admin.sportsPermissions.some(s => s.toLowerCase() === sport.toLowerCase());
+      if (!hasPerm) return sendError(res, 403, `Access denied. No permission for sport: ${sport}.`);
+    } else {
+      filter.sport = { $in: req.admin.sportsPermissions };
+    }
+  }
+
   const total = await Player.countDocuments(filter);
   const players = await Player.find(filter)
     .sort({ name: 1 })
@@ -26,6 +38,15 @@ exports.getAllPlayers = asyncHandler(async (req, res) => {
 exports.getPlayer = asyncHandler(async (req, res) => {
   const player = await Player.findById(req.params.id);
   if (!player) return sendError(res, 404, "Player not found.");
+
+  if (req.admin && req.admin.role === "admin") {
+    if (req.admin.status !== "approved") {
+      return sendError(res, 403, "Access denied. Your account is pending or suspended.");
+    }
+    const hasPerm = req.admin.sportsPermissions.some(s => s.toLowerCase() === player.sport.toLowerCase());
+    if (!hasPerm) return sendError(res, 403, `Access denied. No permission for sport: ${player.sport}.`);
+  }
+
   sendSuccess(res, 200, "Player retrieved.", player);
 });
 
@@ -36,6 +57,15 @@ exports.createPlayer = asyncHandler(async (req, res) => {
     return sendError(res, 400, "Validation failed", errors.array());
 
   const { name, age, sport, team } = req.body;
+
+  if (req.admin && req.admin.role === "admin") {
+    if (req.admin.status !== "approved") {
+      return sendError(res, 403, "Access denied. Your account is pending or suspended.");
+    }
+    const hasPerm = req.admin.sportsPermissions.some(s => s.toLowerCase() === sport.toLowerCase());
+    if (!hasPerm) return sendError(res, 403, `Access denied. No permission for sport: ${sport}.`);
+  }
+
   const playerData = { name, age, sport, team };
 
   if (req.file) {
@@ -57,6 +87,19 @@ exports.updatePlayer = asyncHandler(async (req, res) => {
   if (!player) return sendError(res, 404, "Player not found.");
 
   const { name, age, sport, team, isActive } = req.body;
+
+  if (req.admin && req.admin.role === "admin") {
+    if (req.admin.status !== "approved") {
+      return sendError(res, 403, "Access denied. Your account is pending or suspended.");
+    }
+    const hasOldPerm = req.admin.sportsPermissions.some(s => s.toLowerCase() === player.sport.toLowerCase());
+    if (!hasOldPerm) return sendError(res, 403, `Access denied. No permission for sport: ${player.sport}.`);
+    if (sport) {
+      const hasNewPerm = req.admin.sportsPermissions.some(s => s.toLowerCase() === sport.toLowerCase());
+      if (!hasNewPerm) return sendError(res, 403, `Access denied. No permission for sport: ${sport}.`);
+    }
+  }
+
   if (name !== undefined) player.name = name;
   if (age !== undefined) player.age = age;
   if (sport !== undefined) player.sport = sport;
@@ -79,6 +122,14 @@ exports.updatePlayer = asyncHandler(async (req, res) => {
 exports.deletePlayer = asyncHandler(async (req, res) => {
   const player = await Player.findById(req.params.id);
   if (!player) return sendError(res, 404, "Player not found.");
+
+  if (req.admin && req.admin.role === "admin") {
+    if (req.admin.status !== "approved") {
+      return sendError(res, 403, "Access denied. Your account is pending or suspended.");
+    }
+    const hasPerm = req.admin.sportsPermissions.some(s => s.toLowerCase() === player.sport.toLowerCase());
+    if (!hasPerm) return sendError(res, 403, `Access denied. No permission for sport: ${player.sport}.`);
+  }
 
   if (player.profileImagePublicId) {
     await cloudinary.uploader.destroy(player.profileImagePublicId);

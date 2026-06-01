@@ -73,17 +73,17 @@ export default function AdminLoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
+            {/* Email / Mobile */}
             <div>
               <label className="block text-slate-600 text-xs font-bold uppercase tracking-wider mb-2">
-                Email Address
+                Email / Mobile Number
               </label>
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@defactoinstitute.com"
+                placeholder="admin@defactoinstitute.com or 9876543210"
                 className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-300 focus:outline-none focus:border-[#E60000]/60 focus:ring-2 focus:ring-[#E60000]/10 focus:bg-white transition-all duration-200 text-sm font-medium"
               />
             </div>
@@ -129,7 +129,16 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-slate-400 text-xs mt-6">
+          <div className="border-t border-slate-100 mt-6 pt-5 text-center">
+            <a
+              href="/summer-registration-game-admin"
+              className="text-xs font-bold text-slate-500 hover:text-[#E60000] transition-colors"
+            >
+              New Game Admin? Register Here
+            </a>
+          </div>
+
+          <p className="text-center text-slate-400 text-xs mt-4">
             🔒 Secure admin access — Defacto Institute 2026
           </p>
         </div>

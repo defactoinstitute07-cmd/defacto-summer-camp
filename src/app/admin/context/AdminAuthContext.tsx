@@ -5,9 +5,13 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 interface Admin {
   _id: string;
-  username: string;
-  email: string;
+  username?: string;
+  email?: string;
   role: string;
+  fullName?: string;
+  mobileNumber?: string;
+  status?: string;
+  sportsPermissions?: string[];
 }
 
 interface AuthContextType {
@@ -16,6 +20,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshAdminData: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -58,8 +63,20 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setAdmin(null);
   }, []);
 
+  const refreshAdminData = useCallback(async () => {
+    try {
+      const data = await adminFetch("/auth/me");
+      if (data.success && data.data) {
+        localStorage.setItem("admin_data", JSON.stringify(data.data));
+        setAdmin(data.data);
+      }
+    } catch (err) {
+      console.error("Failed to refresh admin data", err);
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ admin, token, loading, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ admin, token, loading, login, logout, refreshAdminData, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );

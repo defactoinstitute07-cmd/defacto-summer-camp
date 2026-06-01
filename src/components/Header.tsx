@@ -98,7 +98,7 @@ export default function Header() {
             className="fixed inset-x-0 top-[73px] z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200 p-6 md:hidden flex flex-col gap-6 shadow-xl"
           >
             <a
-              href="/camp-portal"
+              href="https://summercamp.defactoinstitute.in/"
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 font-display font-bold text-lg tracking-widest text-slate-700 hover:text-[#E60000] uppercase py-2 border-b border-slate-100 transition-colors duration-200"
             >
@@ -106,7 +106,7 @@ export default function Header() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E60000] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#E60000]" />
               </span>
-              Follow the Camp
+             Camp Website
             </a>
 
             <a

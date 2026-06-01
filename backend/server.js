@@ -130,18 +130,20 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
-const PORT = parseInt(process.env.PORT || "5000", 10);
-const server = app.listen(PORT, () => {
-  console.log(
-    `\n🚀 Defacto Camp API running on port ${PORT} in ${process.env.NODE_ENV || "development"} mode`
-  );
-  console.log(`   Health check: http://localhost:${PORT}/api/health\n`);
-});
+if (!process.env.VERCEL) {
+  const PORT = parseInt(process.env.PORT || "5000", 10);
+  const server = app.listen(PORT, () => {
+    console.log(
+      `\n🚀 Defacto Camp API running on port ${PORT} in ${process.env.NODE_ENV || "development"} mode`
+    );
+    console.log(`   Health check: http://localhost:${PORT}/api/health\n`);
+  });
 
-// Unhandled promise rejections — log and exit gracefully
-process.on("unhandledRejection", (err) => {
-  console.error("💥 Unhandled Rejection:", err.name, err.message);
-  server.close(() => process.exit(1));
-});
+  // Unhandled promise rejections — log and exit gracefully
+  process.on("unhandledRejection", (err) => {
+    console.error("💥 Unhandled Rejection:", err.name, err.message);
+    server.close(() => process.exit(1));
+  });
+}
 
 module.exports = app;

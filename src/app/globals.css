@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc; /* Slate 50 */
+  --foreground: #0f172a; /* Slate 900 */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-outfit);
+  
+  /* Brand Sports Palette */
+  --color-brand-navy: #0B1C4A;
+  --color-brand-red: #E60000;
+  --color-brand-yellow: #FFDE00;
+  --color-brand-blue-sky: #38BDF8;
+
+  /* Theme variable overrides for drop-in color replacement */
+  --color-brand-orange-light: #fef2f2; /* red-50 */
+  --color-brand-orange: #E60000; /* Bright Red */
+  --color-brand-orange-hover: #cc0000;
+  --color-brand-orange-dark: #991b1b;
+
+  --color-brand-blue-light: #f0f9ff; /* sky-50 */
+  --color-brand-blue: #38BDF8; /* Light Blue */
+  --color-brand-blue-hover: #0ea5e9;
+  --color-brand-blue-dark: #0369a1;
+  --color-brand-blue-deep: #0B1C4A; /* Deep Navy Blue */
+  --color-brand-blue-card: rgba(255, 255, 255, 0.7);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
 }
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9; /* Slate 100 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* Slate 300 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #f97316;
+}
+
+/* Glassmorphism custom styles for light theme */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.glass-effect-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-effect-hover:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(249, 115, 22, 0.3);
+  box-shadow: 0 10px 30px -10px rgba(2, 132, 199, 0.15);
+  transform: translateY(-4px);
+}
+
+/* Vertical marquee scroll (Top to Bottom) */
+@keyframes marquee-vertical-down {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+.animate-marquee-vertical-down {
+  animation: marquee-vertical-down 25s linear infinite;
+}
+
+.animate-marquee-vertical-down:hover {
+  animation-play-state: paused;
+}
+
+
+

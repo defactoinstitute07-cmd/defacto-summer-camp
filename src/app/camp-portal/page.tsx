@@ -8,6 +8,9 @@ import * as Icons from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+// Robust URL helper to clean any double-slashes from environment variables
+const cleanUrl = (url: string) => url.replace(/([^:]\/)\/+/g, "$1");
+
 interface Game {
   _id: string;
   name: string;
@@ -26,7 +29,7 @@ export default function CampPortalPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`${API}/games`)
+    fetch(cleanUrl(`${API}/games`))
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load games list");
         return res.json();

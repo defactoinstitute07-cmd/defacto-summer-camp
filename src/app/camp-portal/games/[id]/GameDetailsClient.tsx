@@ -18,6 +18,9 @@ import * as Icons from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+// Robust URL helper to clean any double-slashes from environment variables
+const cleanUrl = (url: string) => url.replace(/([^:]\/)\/+/g, "$1");
+
 interface Game {
   _id: string;
   name: string;
@@ -77,7 +80,7 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
   const [matchFilter, setMatchFilter] = useState<"all" | "live" | "upcoming" | "completed">("all");
 
   useEffect(() => {
-    fetch(`${API}/games/${gameId}/details`)
+    fetch(cleanUrl(`${API}/games/${gameId}/details`))
       .then((res) => {
         if (!res.ok) throw new Error("Game details could not be retrieved.");
         return res.json();

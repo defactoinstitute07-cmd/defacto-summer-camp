@@ -143,6 +143,8 @@ exports.registerGameAdmin = asyncHandler(async (req, res) => {
 
   const passwordHash = await bcrypt.hash(password, 12);
   const admin = await Admin.create({
+    username: mobileNumber,
+    email: `${mobileNumber}@defacto.temp`,
     fullName,
     mobileNumber,
     password: passwordHash,

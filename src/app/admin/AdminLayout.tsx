@@ -225,6 +225,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <a href="/" className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0B1C4A] text-white text-xs font-bold hover:bg-[#0B1C4A]/90 transition-colors">
             View Site ↗
           </a>
+
+          {/* Logout button for mobile limited admins */}
+          {admin?.role === "admin" && (
+            <button
+              onClick={handleLogout}
+              className="lg:hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-red-50 border border-red-200 text-[#E60000] text-xs font-bold hover:bg-red-100 transition-colors active:scale-95 cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          )}
         </header>
 
         {/* Page content */}

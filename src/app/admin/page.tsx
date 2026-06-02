@@ -4,7 +4,7 @@ import { adminFetch, useAdminAuth } from "./context/AdminAuthContext";
 import { motion } from "framer-motion";
 import {
   Users, UserCheck, Trophy, CalendarCheck, Image,
-  Megaphone, Swords, TrendingUp, Shield, Activity,
+  Megaphone, Swords, TrendingUp, Shield, Activity, LogOut,
 } from "lucide-react";
 
 interface Stats {
@@ -37,7 +37,7 @@ const statusColor: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
-  const { admin } = useAdminAuth();
+  const { admin, logout } = useAdminAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -101,6 +101,30 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Welcome & Profile Banner */}
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-slate-900 text-lg sm:text-xl font-black uppercase tracking-tight">
+            Welcome back, {admin?.fullName || admin?.username}!
+          </h2>
+          <p className="text-slate-500 text-xs sm:text-sm font-semibold mt-1">
+            Logged in as <span className="text-[#E60000] capitalize font-bold">{admin?.role}</span>
+            {admin?.sportsPermissions && admin.sportsPermissions.length > 0 && (
+              <span> • Sports: {admin.sportsPermissions.join(", ")}</span>
+            )}
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            logout();
+            window.location.href = "/admin/login";
+          }}
+          className="self-start sm:self-auto inline-flex items-center gap-2 px-4.5 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200/60 text-[#E60000] text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95 shadow-sm"
+        >
+          <LogOut className="w-4 h-4" /> Logout
+        </button>
+      </div>
+
       {/* Stats grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c, i) => (

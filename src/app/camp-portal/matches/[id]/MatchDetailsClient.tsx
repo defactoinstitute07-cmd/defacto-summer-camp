@@ -212,7 +212,6 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
   const logContainerRef = useRef<HTMLDivElement | null>(null);
   const disconnectedAtRef = useRef<number | null>(null);
   const pollingRef        = useRef<ReturnType<typeof setInterval> | null>(null);
-  const graceTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-scroll play logs on update
   useEffect(() => {
@@ -221,16 +220,18 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
     }
   }, [data?.match?.timeline]);
 
-  const stopPolling = useCallback(() => {
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-  }, []);
-
   const fetchDetails = useCallback(async (quiet = false) => {
     try {
-      const res = await fetchWithBackoff(cleanUrl(`${API}/matches/${matchId}`));
+      const res = await fetchWithBackoff(
+        cleanUrl(`${API}/matches/${matchId}?t=${Date.now()}`),
+        {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+        }
+      );
       const d = await res.json().catch(() => null);
       if (!res.ok || !d?.success) {
         throw new Error(d?.message || "Match details could not be retrieved.");
@@ -249,17 +250,7 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
     }
   }, [matchId]);
 
-  const startPolling = useCallback((runImmediately = false) => {
-    setConnectionStatus("delayed");
-    if (runImmediately) void fetchDetails(true);
-    if (pollingRef.current) return;
-
-    pollingRef.current = setInterval(() => {
-      void fetchDetails(true);
-    }, 30000); // 30s poll interval
-  }, [fetchDetails]);
-
-  // Set up Socket.IO connection and fallbacks
+  // Set up Socket.IO connection and status updates
   useEffect(() => {
     const initialFetchTimer = setTimeout(() => {
       void fetchDetails();
@@ -267,14 +258,9 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
 
     const socketUrl = getSocketUrl();
     if (!shouldUseSocket(socketUrl)) {
-      const pollingStartTimer = setTimeout(() => {
-        startPolling();
-      }, 0);
-
+      setConnectionStatus("delayed");
       return () => {
         clearTimeout(initialFetchTimer);
-        clearTimeout(pollingStartTimer);
-        stopPolling();
       };
     }
 
@@ -285,27 +271,17 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
 
     socket.on("connect", () => {
       disconnectedAtRef.current = null;
-      if (graceTimerRef.current) {
-        clearTimeout(graceTimerRef.current);
-      }
-      stopPolling();
-      setConnectionStatus('live');
-      socket.emit('rejoin-match', matchId);
+      setConnectionStatus("live");
+      socket.emit("rejoin-match", matchId);
     });
 
     socket.on("connect_error", () => {
-      startPolling(true);
+      setConnectionStatus("delayed");
     });
 
     socket.on("disconnect", () => {
       disconnectedAtRef.current = Date.now();
-      setConnectionStatus('reconnecting');
-      // Wait 10s grace duration before starting fallback polling
-      graceTimerRef.current = setTimeout(() => {
-        if (!socket.connected) {
-          startPolling();
-        }
-      }, 10000);
+      setConnectionStatus("reconnecting");
     });
 
     socket.on("matchState", (serverData: unknown) => {
@@ -378,13 +354,44 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
 
     return () => {
       clearTimeout(initialFetchTimer);
-      stopPolling();
-      if (graceTimerRef.current) {
-        clearTimeout(graceTimerRef.current);
-      }
       socket.disconnect();
     };
-  }, [fetchDetails, matchId, startPolling, stopPolling]);
+  }, [fetchDetails, matchId]);
+
+  // Dynamic polling fallback when WebSocket is inactive/unavailable
+  useEffect(() => {
+    const socketUrl = getSocketUrl();
+    const isSocketEnabled = shouldUseSocket(socketUrl);
+    const isLive = isSocketEnabled && connectionStatus === "live";
+
+    if (isLive) {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      return;
+    }
+
+    const matchStatus = data?.match?.status;
+    // Live / Paused matches are polled every 5 seconds; Upcoming / Completed are polled every 30 seconds
+    const intervalTime = (matchStatus === "live" || matchStatus === "paused") ? 5000 : 30000;
+
+    // Perform an immediate fetch when entering fallback polling mode
+    void fetchDetails(true);
+
+    const interval = setInterval(() => {
+      void fetchDetails(true);
+    }, intervalTime);
+
+    pollingRef.current = interval;
+
+    return () => {
+      clearInterval(interval);
+      if (pollingRef.current === interval) {
+        pollingRef.current = null;
+      }
+    };
+  }, [data?.match?.status, connectionStatus, fetchDetails]);
 
   // Fetch games list to link back to the sport details page
   useEffect(() => {

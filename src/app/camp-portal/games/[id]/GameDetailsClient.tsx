@@ -94,7 +94,13 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
   const [matchFilter, setMatchFilter] = useState<"all" | "live" | "upcoming" | "completed">("all");
 
   useEffect(() => {
-    fetch(cleanUrl(`${API}/games/${gameId}/details`))
+    fetch(cleanUrl(`${API}/games/${gameId}/details?t=${Date.now()}`), {
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+      },
+    })
       .then((res) => {
         if (!res.ok) throw new Error("Game details could not be retrieved.");
         return res.json();
@@ -117,6 +123,34 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
     players: [],
     teams: []
   };
+
+  // Dynamic auto-refresh polling when on the game details page
+  useEffect(() => {
+    const hasLiveMatch = matches.some((m) => m.status === "live" || m.status === "paused");
+    const intervalTime = hasLiveMatch ? 10000 : 60000;
+
+    const interval = setInterval(() => {
+      fetch(cleanUrl(`${API}/games/${gameId}/details?t=${Date.now()}`), {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache",
+        },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Game details could not be retrieved.");
+          return res.json();
+        })
+        .then((d) => {
+          if (d.success) {
+            setData(d.data);
+          }
+        })
+        .catch((err) => console.warn("Failed to auto-refresh game details:", err));
+    }, intervalTime);
+
+    return () => clearInterval(interval);
+  }, [gameId, matches]);
 
   const filteredMatches = matches.filter(
     (m) => matchFilter === "all" || m.status === matchFilter

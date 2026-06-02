@@ -160,6 +160,14 @@ const publicReadLimiter = (req, res, next) => {
   return publicReadMemoryLimiter(req, res, next);
 };
 
+// Disable caching for all API responses to ensure real-time score updates
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  next();
+});
+
 // Apply write/auth limiting
 app.use("/api/auth", strictLimiter);
 app.post("/api/matches", strictLimiter);

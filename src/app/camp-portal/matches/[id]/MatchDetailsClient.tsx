@@ -237,6 +237,13 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
         throw new Error(d?.message || "Match details could not be retrieved.");
       }
 
+      // Check if response contains cached status message from Express memory cache
+      if (d?.message && d.message.includes("cached")) {
+        console.log("💾 [Cache HIT] Match details loaded from backend cache.");
+      } else {
+        console.log("🗄️ [Cache MISS] Match details loaded directly from MongoDB.");
+      }
+
       const nextData = normalizeMatchDetails(d.data);
       if (!nextData) throw new Error("Match details are unavailable.");
 
@@ -259,6 +266,7 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
     const socketUrl = getSocketUrl();
     if (!shouldUseSocket(socketUrl)) {
       setConnectionStatus("delayed");
+      console.log("ℹ️ [WebSocket] WebSockets are disabled on this host. Falling back to HTTP polling.");
       return () => {
         clearTimeout(initialFetchTimer);
       };
@@ -272,16 +280,19 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
     socket.on("connect", () => {
       disconnectedAtRef.current = null;
       setConnectionStatus("live");
+      console.log("🔌 [WebSocket] Socket.IO connected successfully to backend:", socketUrl);
       socket.emit("rejoin-match", matchId);
     });
 
-    socket.on("connect_error", () => {
+    socket.on("connect_error", (err) => {
       setConnectionStatus("delayed");
+      console.warn("⚠️ [WebSocket] Connection error. Polling fallback active:", err.message);
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
       disconnectedAtRef.current = Date.now();
       setConnectionStatus("reconnecting");
+      console.log("🔌 [WebSocket] Disconnected from server (Reason:", reason, "). Reconnecting...");
     });
 
     socket.on("matchState", (serverData: unknown) => {
@@ -414,6 +425,20 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
   const showInitialLoading = loading && !data?.match;
   const colorA = teamAColor || "#0B1C4A";
   const colorB = teamBColor || "#0B1C4A";
+  const winnerColor = match.status === "completed"
+    ? match.winner === "teamA"
+      ? colorA
+      : match.winner === "teamB"
+      ? colorB
+      : null
+    : null;
+
+  const isWinningA = match.status === "completed"
+    ? match.winner === "teamA"
+    : (match.status !== "upcoming" && match.scoreA > match.scoreB);
+  const isWinningB = match.status === "completed"
+    ? match.winner === "teamB"
+    : (match.status !== "upcoming" && match.scoreB > match.scoreA);
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -476,40 +501,7 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
     Back
   </button>
   
-  {/* Badges Container */}
-  <div className="flex flex-wrap items-center justify-end gap-2">
-    
-    {/* Connection Status Badge */}
-    {connectionStatus === "live" && (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-green-500 border border-green-400 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-sm">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-100 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
-        </span>
-        LIVE
-      </span>
-    )}
-    
-    {connectionStatus === "reconnecting" && (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-amber-500 border border-amber-400 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-sm animate-pulse">
-        <span className="w-1.5 h-1.5 rounded-full bg-white" />
-        Reconnecting...
-      </span>
-    )}
-    
-    {connectionStatus === "delayed" && (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-orange-500 border border-orange-400 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-sm">
-        <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" />
-        Delayed
-      </span>
-    )}
 
-    {/* Match Info Badge */}
-    <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 shadow-sm text-center">
-      {match.sport} • {match.round}{match.maxPoints ? ` • First to ${match.maxPoints}` : ""}
-    </span>
-    
-  </div>
 </header>
 
         {/* Responsive Grid Layout */}
@@ -518,196 +510,156 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
           {/* Left Column: Match Details & Scoreboard */}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Professional Glowing Scoreboard Card */}
-            <section className={`bg-white border rounded-3xl p-5 sm:p-8 transition-all duration-300 relative overflow-hidden ${
-              match.status === "live"
-                ? "border-green-300 ring-2 ring-green-100/50 "
-                : match.status === "paused"
-                ? "border-amber-300 ring-2 ring-amber-100/50 "
-                : match.status === "completed"
-                ? "border-red-300 ring-2 ring-red-100/50 "
-                : "border-slate-200/80 "
-            }`}>
-              {/* Top team color accent header line */}
-              <div className="absolute top-0 left-0 right-0 h-1.5 flex">
-                <div className="flex-1 animate-pulse" style={{ backgroundColor: colorA }} />
-                <div className="flex-1 animate-pulse" style={{ backgroundColor: colorB }} />
-              </div>
+{/* Professional Clean Scoreboard Card */}
+<section className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-8 transition-all duration-300 relative overflow-hidden shadow-sm hover:shadow-md">
+  
+  {/* Top team color accent header line */}
+  <div className="absolute top-0 left-0 right-0 h-1.5 flex">
+    <div className="flex-1" style={{ backgroundColor: colorA }} />
+    <div className="flex-1" style={{ backgroundColor: colorB }} />
+  </div>
 
-              {/* Glowing subtle color shapes */}
-              {match.status === "live" && (
-                <>
-                  <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-green-500/10 blur-3xl pointer-events-none" />
-                  <div className="absolute -bottom-12 -right-12 w-48 h-48 rounded-full bg-green-500/5 blur-3xl pointer-events-none" />
-                </>
-              )}
-              {match.status === "paused" && (
-                <>
-                  <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-                  <div className="absolute -bottom-12 -right-12 w-48 h-48 rounded-full bg-amber-500/5 blur-3xl pointer-events-none" />
-                </>
-              )}
-              {match.status === "completed" && (
-                <>
-                  <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-red-500/10 blur-3xl pointer-events-none" />
-                  <div className="absolute -bottom-12 -right-12 w-48 h-48 rounded-full bg-red-500/5 blur-3xl pointer-events-none" />
-                </>
-              )}
-              {match.status === "upcoming" && (
-                <>
-                  <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-[#E60000]/5 blur-3xl pointer-events-none" />
-                  <div className="absolute -bottom-12 -right-12 w-48 h-48 rounded-full bg-[#0B1C4A]/5 blur-3xl pointer-events-none" />
-                </>
-              )}
+  {/* Match Status Badge */}
+  <div className="flex justify-center mb-6">
+    {match.status === "live" && (
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 border-2 border-green-500 shadow-sm">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 animate-ping opacity-75"></span>
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
+        </span>
+        <span className="font-extrabold tracking-wider text-green-700 uppercase text-[10px] sm:text-xs">
+          LIVE NOW
+        </span>
+      </div>
+    )}
 
-              {/* Match Status Badge */}
-<div className="flex justify-center mb-6">
-  {match.status === "live" && (
-    <div className="inline-flex items-center gap-3 px-5 sm:px-6 py-2.5 rounded-full bg-green-50 border-2 border-green-500 shadow-sm">
-      <span className="relative flex h-3 w-3">
-        <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 animate-ping opacity-75"></span>
-        <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
-      </span>
+    {match.status === "paused" && (
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 border-2 border-amber-500 shadow-sm">
+        <Pause className="w-3.5 h-3.5 text-amber-600" />
+        <span className="font-extrabold tracking-wider text-amber-700 uppercase text-[10px] sm:text-xs">
+          MATCH PAUSED
+        </span>
+      </div>
+    )}
 
+    {match.status === "upcoming" && (
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border-2 border-blue-500 shadow-sm">
+        <Calendar className="w-3.5 h-3.5 text-blue-600" />
+        <span className="font-extrabold tracking-wider text-blue-700 uppercase text-[10px] sm:text-xs">
+          UPCOMING MATCH
+        </span>
+      </div>
+    )}
 
-      <span className="font-extrabold tracking-wider text-green-700 uppercase text-xs sm:text-sm">
-        LIVE NOW
-      </span>
+    {match.status === "completed" && (
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 border-2 border-red-500 shadow-sm">
+        <CheckCircle className="w-3.5 h-3.5 text-red-600" />
+        <span className="font-extrabold tracking-wider text-red-700 uppercase text-[10px] sm:text-xs">
+          MATCH ENDED
+        </span>
+      </div>
+    )}
+  </div>
+
+  {/* Horizontal Teams and Score Layout (As per Image) */}
+  <div className="flex items-center justify-between sm:justify-center sm:gap-14 my-4 max-w-xl mx-auto">
+    
+    {/* Team A Column */}
+    <div className="flex flex-col items-center text-center flex-1 sm:flex-initial">
+      <div 
+        className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm transition-all duration-300"
+        style={{ 
+          borderColor: colorA,
+          boxShadow: isWinningA ? `0 10px 20px -5px ${colorA}25` : 'none'
+        }}
+      >
+        {loading ? (
+          <div className="animate-shimmer w-full h-full bg-slate-100" />
+        ) : teamALogo ? (
+          <img src={teamALogo} alt={match.teamA} className="w-full h-full object-cover" />
+        ) : (
+          <Flag className="w-6 h-6 text-slate-300" />
+        )}
+      </div>
+      
+      <h3 className="font-black uppercase tracking-wide text-xs sm:text-sm mt-3" style={{ color: colorA }}>
+        {match.teamA}
+      </h3>
+      
+      {isWinningA && match.status !== "upcoming" && (
+        <span className="inline-flex items-center gap-1 mt-1 text-[9px] text-amber-600 font-extrabold uppercase tracking-wider bg-amber-50 border border-amber-200/60 rounded-full px-2 py-0.5 shadow-sm">
+          <Trophy className="w-3 h-3 text-amber-500" /> 
+          {match.status === "completed" ? "Winner" : "Leading"}
+        </span>
+      )}
     </div>
-  )}
 
-  {match.status === "paused" && (
-    <div className="inline-flex items-center gap-3 px-5 sm:px-6 py-2.5 rounded-full bg-amber-50 border-2 border-amber-500 shadow-sm">
-      <Pause className="w-4 h-4 text-amber-600" />
-
-      <span className="font-extrabold tracking-wider text-amber-700 uppercase text-xs sm:text-sm">
-        MATCH PAUSED
-      </span>
+    {/* Center Scores */}
+    <div className="flex items-center gap-2 sm:gap-3 px-4 shrink-0 font-display select-none">
+      {match.status === "upcoming" ? (
+        <span className="text-slate-300 font-black text-xl sm:text-2xl uppercase tracking-widest">VS</span>
+      ) : (
+        <>
+          <span className="text-3xl sm:text-5xl font-black tracking-tight" style={{ color: colorA }}>
+            {match.scoreA}
+          </span>
+          <span className="text-slate-300 text-xl sm:text-3xl font-light">—</span>
+          <span className="text-3xl sm:text-5xl font-black tracking-tight" style={{ color: colorB }}>
+            {match.scoreB}
+          </span>
+        </>
+      )}
     </div>
-  )}
 
-  {match.status === "upcoming" && (
-    <div className="inline-flex items-center gap-3 px-5 sm:px-6 py-2.5 rounded-full bg-blue-50 border-2 border-blue-500 shadow-sm">
-      <Calendar className="w-4 h-4 text-blue-600" />
-
-      <span className="font-extrabold tracking-wider text-blue-700 uppercase text-xs sm:text-sm">
-        UPCOMING MATCH
-      </span>
+    {/* Team B Column */}
+    <div className="flex flex-col items-center text-center flex-1 sm:flex-initial">
+      <div 
+        className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm transition-all duration-300"
+        style={{ 
+          borderColor: colorB,
+          boxShadow: isWinningB ? `0 10px 20px -5px ${colorB}25` : 'none'
+        }}
+      >
+        {loading ? (
+          <div className="animate-shimmer w-full h-full bg-slate-100" />
+        ) : teamBLogo ? (
+          <img src={teamBLogo} alt={match.teamB} className="w-full h-full object-cover" />
+        ) : (
+          <Flag className="w-6 h-6 text-slate-300" />
+        )}
+      </div>
+      
+      <h3 className="font-black uppercase tracking-wide text-xs sm:text-sm mt-3" style={{ color: colorB }}>
+        {match.teamB}
+      </h3>
+      
+      {isWinningB && match.status !== "upcoming" && (
+        <span className="inline-flex items-center gap-1 mt-1 text-[9px] text-amber-600 font-extrabold uppercase tracking-wider bg-amber-50 border border-amber-200/60 rounded-full px-2 py-0.5 shadow-sm">
+          <Trophy className="w-3 h-3 text-amber-500" /> 
+          {match.status === "completed" ? "Winner" : "Leading"}
+        </span>
+      )}
     </div>
-  )}
 
-  {match.status === "completed" && (
-    <div className="inline-flex items-center gap-3 px-5 sm:px-6 py-2.5 rounded-full bg-red-50 border-2 border-red-500 shadow-sm">
-      <CheckCircle className="w-4 h-4 text-red-600" />
+  </div>
 
-      <span className="font-extrabold tracking-wider text-red-700 uppercase text-xs sm:text-sm">
-        MATCH ENDED
-      </span>
-    </div>
-  )}
-</div>
-
-              {/* Teams and Score Grid */}
-              <div className="grid grid-cols-7 items-center justify-center text-center gap-2 sm:gap-4">
-                
-                {/* Team A Info */}
-                <div className="col-span-3 flex flex-col items-center">
-                  <div
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-slate-50 border-2 shadow-inner flex items-center justify-center overflow-hidden relative mb-3"
-                    style={{ borderColor: colorA }}
-                  >
-                    {loading ? (
-                      <div className="animate-shimmer w-full h-full" />
-                    ) : teamALogo ? (
-                      <img src={teamALogo} alt={match.teamA} className="w-full h-full object-cover" />
-                    ) : (
-                      <Flag className="w-8 h-8 text-slate-300" />
-                    )}
-                  </div>
-                  {loading ? (
-                    <div className="animate-shimmer h-5 w-24 rounded bg-slate-200 mt-1" />
-                  ) : (
-                    <h2 className="text-sm sm:text-lg font-black uppercase tracking-wide max-w-full truncate px-1" style={{ color: colorA }}>
-                      {match.teamA}
-                    </h2>
-                  )}
-                  {!loading && match.status === "completed" && match.winner === "teamA" && (
-                    <span className="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 shadow-sm">
-                      <Trophy className="w-3.5 h-3.5" /> Winner
-                    </span>
-                  )}
-                </div>                 {/* Glowing Big Score */}
-                <div className="col-span-1 flex flex-col items-center justify-center font-display">
-                  {loading ? (
-                    <div className="animate-shimmer h-12 w-24 rounded bg-slate-200" />
-                  ) : match.status === "upcoming" ? (
-                    <span className="text-slate-300 font-black text-2xl sm:text-4xl">VS</span>
-                  ) : (
-                    <div className="flex items-center gap-1.5 sm:gap-3 text-4xl sm:text-6xl font-black">
-                      <span
-                        className={`${match.status === "live" ? "animate-pulse" : ""} ${match.status === "completed" && match.winner !== "teamA" ? "opacity-60" : ""}`}
-                        style={{ color: colorA }}
-                      >
-                        {match.scoreA}
-                      </span>
-                      <span className="text-slate-300 text-3xl sm:text-5xl font-light">—</span>
-                      <span
-                        className={`${match.status === "live" ? "animate-pulse" : ""} ${match.status === "completed" && match.winner !== "teamB" ? "opacity-60" : ""}`}
-                        style={{ color: colorB }}
-                      >
-                        {match.scoreB}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Team B Info */}
-                <div className="col-span-3 flex flex-col items-center">
-                  <div
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-slate-50 border-2 shadow-inner flex items-center justify-center overflow-hidden relative mb-3"
-                    style={{ borderColor: colorB }}
-                  >
-                    {loading ? (
-                      <div className="animate-shimmer w-full h-full" />
-                    ) : teamBLogo ? (
-                      <img src={teamBLogo} alt={match.teamB} className="w-full h-full object-cover" />
-                    ) : (
-                      <Flag className="w-8 h-8 text-slate-300" />
-                    )}
-                  </div>
-                  {loading ? (
-                    <div className="animate-shimmer h-5 w-24 rounded bg-slate-200 mt-1" />
-                  ) : (
-                    <h2 className="text-sm sm:text-lg font-black uppercase tracking-wide max-w-full truncate px-1" style={{ color: colorB }}>
-                      {match.teamB}
-                    </h2>
-                  )}
-                  {!loading && match.status === "completed" && match.winner === "teamB" && (
-                    <span className="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 shadow-sm">
-                      <Trophy className="w-3.5 h-3.5" /> Winner
-                    </span>
-                  )}
-                </div>
-
-              </div>
-
-              {/* Time & Round details */}
-              <div className="border-t border-slate-100 mt-6 pt-4 text-center text-xs text-slate-500 space-y-1">
-                <p className="font-semibold flex items-center justify-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  {showInitialLoading ? (
-                    <span className="animate-shimmer h-4 w-56 rounded bg-slate-200" />
-                  ) : (
-                    formatDate(match.date)
-                  )}
-                </p>
-                {match.notes && (
-                  <p className="italic text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 max-w-lg mx-auto mt-2">
-                    {`"${match.notes}"`}
-                  </p>
-                )}
-              </div>
-            </section>
+  {/* Time & Round details */}
+  <div className="border-t border-slate-100 mt-6 pt-4 text-center text-xs text-slate-400 space-y-1">
+    <p className="font-semibold flex items-center justify-center gap-1.5 text-slate-500">
+      <Clock className="w-3.5 h-3.5 text-slate-400" />
+      {showInitialLoading ? (
+        <span className="animate-shimmer h-4 w-56 rounded bg-slate-200 inline-block" />
+      ) : (
+        formatDate(match.date)
+      )}
+    </p>
+    {match.notes && (
+      <p className="italic text-slate-400 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 max-w-lg mx-auto mt-2">
+        {`"${match.notes}"`}
+      </p>
+    )}
+  </div>
+</section>
 
             {/* Set-by-Set Scores Section */}
             {loading ? (
@@ -859,7 +811,7 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
 
               {/* Event Card */}
               <div
-                className={`rounded-2xl border bg-white p-4 transition-all ${
+                className={`rounded-2xl bg-white p-4 transition-all ${
                   isLatest
                     ? "shadow-md ring-2 ring-slate-100"
                     : "shadow-sm"

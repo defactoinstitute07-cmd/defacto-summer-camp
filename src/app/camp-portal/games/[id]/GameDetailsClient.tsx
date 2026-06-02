@@ -75,6 +75,7 @@ interface Team {
   sport: string;
   captain?: Player | null;
   logoUrl?: string;
+  color?: string;
 }
 
 interface GameDetailsResponse {
@@ -194,19 +195,7 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
           {/* Banner Row */}
           <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
-              {loading ? (
-                <div className="animate-shimmer w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-200" />
-              ) : game.imageSrc ? (
-                <img
-                  src={game.imageSrc}
-                  alt={game.name}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border border-slate-100 shadow-md shadow-slate-100"
-                />
-              ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#E60000]/10 flex items-center justify-center text-[#E60000] border border-[#E60000]/10 shadow-sm">
-                  <Gamepad2 className="w-10 h-10" />
-                </div>
-              )}
+            
 
               <div>
                 {/* Active Live Status */}
@@ -215,18 +204,16 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
                     <div className="animate-shimmer h-5 w-16 rounded-full bg-slate-200" />
                   ) : (
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border capitalize ${
-                        game.status === "ongoing"
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border capitalize ${game.status === "ongoing"
                           ? "bg-green-50 border-green-200 text-green-700"
                           : game.status === "upcoming"
-                          ? "bg-amber-50 border-amber-200 text-amber-700"
-                          : "bg-slate-50 border-slate-200 text-slate-500"
-                      }`}
+                            ? "bg-amber-50 border-amber-200 text-amber-700"
+                            : "bg-slate-50 border-slate-200 text-slate-500"
+                        }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          game.status === "ongoing" ? "bg-green-500 animate-pulse" : game.status === "upcoming" ? "bg-amber-500" : "bg-slate-400"
-                        }`}
+                        className={`w-1.5 h-1.5 rounded-full ${game.status === "ongoing" ? "bg-green-500 animate-pulse" : game.status === "upcoming" ? "bg-amber-500" : "bg-slate-400"
+                          }`}
                       />
                       {game.status}
                     </span>
@@ -249,112 +236,78 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
               </div>
             </div>
 
-          {/* Quick Stats Panel */}
-<div className="grid grid-cols-2 lg:flex lg:flex-nowrap gap-3 sm:gap-4 w-full lg:w-auto border-t lg:border-t-0 border-slate-100 pt-6 lg:pt-0">
-  {loading ? (
-    [...Array(teams.length > 0 ? 4 : 3)].map((_, i) => (
-      <div key={i} className="flex-1 lg:flex-initial bg-slate-50 p-3 sm:p-4 border border-slate-200/60 rounded-2xl text-center">
-        <div className="animate-shimmer h-6 sm:h-8 w-12 mx-auto rounded bg-slate-200 mb-1" />
-        <div className="animate-shimmer h-2 sm:h-3 w-16 mx-auto rounded bg-slate-200" />
-      </div>
-    ))
-  ) : (
-    <>
-      <div className="flex-1 lg:flex-initial bg-slate-50 p-3 sm:p-4 border border-slate-200/60 rounded-2xl text-center">
-        <p className="text-xl sm:text-2xl font-display font-black text-[#0B1C4A]">{matches.length}</p>
-        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Matches</p>
-      </div>
-      <div className="flex-1 lg:flex-initial bg-slate-50 p-3 sm:p-4 border border-slate-200/60 rounded-2xl text-center">
-        <p className="text-xl sm:text-2xl font-display font-black text-[#E60000]">{pointsTable.length}</p>
-        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Standings</p>
-      </div>
-      {teams.length > 0 && (
-        <div className="flex-1 lg:flex-initial bg-slate-50 p-3 sm:p-4 border border-slate-200/60 rounded-2xl text-center">
-          <p className="text-xl sm:text-2xl font-display font-black text-[#0B1C4A]">{teams.length}</p>
-          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Teams</p>
-        </div>
-      )}
-      <div className="flex-1 lg:flex-initial bg-slate-50 p-3 sm:p-4 border border-slate-200/60 rounded-2xl text-center">
-        <p className="text-xl sm:text-2xl font-display font-black text-[#0B1C4A]">{players.length}</p>
-        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Players</p>
-      </div>
-    </>
-  )}
-</div>
+
           </div>
         </div>
       </section>
 
       {/* Tabs Navigation */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-    {/* Tabs Section */}
-<div className="w-full">
-  {/* Mobile Scroll Indicator */}
-  <div className="md:hidden flex justify-end mb-2">
-    <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 animate-pulse">
-      Scroll right for more <span className="text-sm leading-none">→</span>
-    </span>
-  </div>
+        {/* Tabs Section */}
+        <div className="w-full">
+          {/* Mobile Scroll Indicator */}
+          <div className="md:hidden flex justify-end mb-2">
+            <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 animate-pulse">
+              Scroll right for more <span className="text-sm leading-none">→</span>
+            </span>
+          </div>
 
-  {/* Tabs Navigation */}
-  <div className="flex border-b border-slate-200/80 mb-6 sm:mb-8 overflow-x-auto gap-4 sm:gap-8 md:gap-10 pb-2 
+          {/* Tabs Navigation */}
+          <div className="flex border-b border-slate-200/80 mb-6 sm:mb-8 overflow-x-auto gap-4 sm:gap-8 md:gap-10 pb-2 
     scrollbar-thin 
     [&::-webkit-scrollbar]:h-1.5 
     [&::-webkit-scrollbar-track]:bg-slate-50 
     [&::-webkit-scrollbar-thumb]:bg-slate-300 
     [&::-webkit-scrollbar-thumb]:rounded-full 
     hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
-  >
-    <button
-      onClick={() => {
-        setActiveTab("matches");
-        setExpandedTeam(null);
-      }}
-      className={`pb-2 sm:pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 ${
-        activeTab === "matches"
-          ? "border-[#E60000] text-[#E60000]"
-          : "border-transparent text-slate-400 hover:text-slate-700"
-      }`}
-    >
-      <Swords className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-      Matches & Scores
-    </button>
-    
-    <button
-      onClick={() => {
-        setActiveTab("standings");
-        setExpandedTeam(null);
-      }}
-      className={`pb-2 sm:pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 ${
-        activeTab === "standings"
-          ? "border-[#E60000] text-[#E60000]"
-          : "border-transparent text-slate-400 hover:text-slate-700"
-      }`}
-    >
-      <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-      Points Table
-    </button>
-    
-    {teams.length > 0 && (
-      <button
-        onClick={() => {
-          setActiveTab("teams");
-          setExpandedTeam(null);
-        }}
-        className={`pb-2 sm:pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 ${
-          activeTab === "teams"
-            ? "border-[#E60000] text-[#E60000]"
-            : "border-transparent text-slate-400 hover:text-slate-700"
-        }`}
-      >
-        <Icons.Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        Teams ({teams.length})
-      </button>
-    )}
-    
-    
-  </div>
-</div>
+          >
+            <button
+              onClick={() => {
+                setActiveTab("matches");
+                setExpandedTeam(null);
+              }}
+              className={`pb-2 sm:pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 ${activeTab === "matches"
+                  ? "border-[#E60000] text-[#E60000]"
+                  : "border-transparent text-slate-400 hover:text-slate-700"
+                }`}
+            >
+              <Swords className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Matches & Scores
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("standings");
+                setExpandedTeam(null);
+              }}
+              className={`pb-2 sm:pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 ${activeTab === "standings"
+                  ? "border-[#E60000] text-[#E60000]"
+                  : "border-transparent text-slate-400 hover:text-slate-700"
+                }`}
+            >
+              <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Points Table
+            </button>
+
+            {teams.length > 0 && (
+              <button
+                onClick={() => {
+                  setActiveTab("teams");
+                  setExpandedTeam(null);
+                }}
+                className={`pb-2 sm:pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 sm:gap-2 shrink-0 ${activeTab === "teams"
+                    ? "border-[#E60000] text-[#E60000]"
+                    : "border-transparent text-slate-400 hover:text-slate-700"
+                  }`}
+              >
+                <Icons.Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Teams ({teams.length})
+              </button>
+            )}
+
+
+          </div>
+        </div>
 
         {/* Tab Contents */}
         <AnimatePresence mode="wait">
@@ -388,11 +341,10 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
                     <button
                       key={tab}
                       onClick={() => setMatchFilter(tab)}
-                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                        matchFilter === tab
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer ${matchFilter === tab
                           ? "bg-[#0B1C4A] text-white"
                           : "bg-slate-50 text-slate-500 hover:text-slate-800 border border-slate-200/50"
-                      }`}
+                        }`}
                     >
                       {tab}
                     </button>
@@ -402,137 +354,181 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
 
               {/* Match Card Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredMatches.map((m) => (
-                  <Link href={`/camp-portal/matches/${m._id}`} key={m._id} className="block group">
-                    <div
-                      className={`bg-white border rounded-2xl p-6 shadow-sm flex flex-col justify-between transition-all duration-200 relative overflow-hidden h-full group-hover:border-slate-300 group-hover:shadow-md ${
-                        m.status === "live"
-                          ? "border-green-200 ring-1 ring-green-100/50"
-                          : m.status === "paused"
-                          ? "border-amber-200 ring-1 ring-amber-100/50"
-                          : m.status === "completed"
-                          ? "border-red-200 ring-1 ring-red-100/50"
-                          : "border-slate-200/80"
-                      }`}
-                    >
-                      {/* Live indicator stripe */}
-                      {m.status === "live" && (
-                        <div className="absolute top-0 inset-x-0 h-1 bg-green-500 animate-pulse" />
-                      )}
-                      {m.status === "paused" && (
-                        <div className="absolute top-0 inset-x-0 h-1 bg-amber-500" />
-                      )}
-                      {m.status === "completed" && (
-                        <div className="absolute top-0 inset-x-0 h-1 bg-red-500" />
-                      )}
+                {filteredMatches.map((m) => {
+                  const getTeamColor = (teamName: string) => {
+                    const team = teams.find((t) => t.name.toLowerCase() === teamName.toLowerCase());
+                    return team?.color || "#0B1C4A";
+                  };
 
-                      {/* Card Header info */}
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-                          {m.round}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-slate-300" />
-                          {formatDate(m.date)}
-                        </span>
-                      </div>
+                  const getTeamLogo = (teamName: string) => {
+                    const team = teams.find((t) => t.name.toLowerCase() === teamName.toLowerCase());
+                    return team?.logoUrl || "";
+                  };
 
-                      {/* Competitors and score */}
-                      <div className="space-y-4 py-3">
-                        {/* Competitor A */}
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`text-base font-bold tracking-tight uppercase ${
-                              m.status === "completed" && m.winner === "teamA"
-                                ? "text-red-655 font-black"
-                                : "text-slate-800"
-                            }`}
-                          >
-                            {m.teamA}
-                            {m.status === "completed" && m.winner === "teamA" && (
-                              <Trophy className="w-4 h-4 text-amber-500 inline-block ml-1.5 mb-1" />
-                            )}
-                          </span>
-                          <span
-                            className={`text-xl font-display font-black px-3.5 py-1.5 rounded-xl border ${
-                              m.status === "live"
-                                ? "bg-green-50 text-green-700 border-green-200 font-black animate-pulse"
-                                : m.status === "paused"
-                                ? "bg-amber-50 text-amber-700 border-amber-200 font-black"
-                                : m.status === "completed" && m.winner === "teamA"
-                                ? "bg-red-50 text-red-600 border-red-200/30"
-                                : "bg-slate-50 text-slate-600 border-slate-200/60"
-                            }`}
-                          >
-                            {m.status === "upcoming" ? "—" : m.scoreA}
-                          </span>
-                        </div>
- 
-                        <div className="text-center text-xs font-black text-slate-300 relative">
-                          <span className="bg-white px-3 relative z-10 uppercase tracking-widest text-[9px]">VS</span>
-                          <div className="absolute top-1/2 inset-x-0 h-px bg-slate-100 z-0" />
-                        </div>
- 
-                        {/* Competitor B */}
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`text-base font-bold tracking-tight uppercase ${
-                              m.status === "completed" && m.winner === "teamB"
-                                ? "text-red-655 font-black"
-                                : "text-slate-800"
-                            }`}
-                          >
-                            {m.teamB}
-                            {m.status === "completed" && m.winner === "teamB" && (
-                              <Trophy className="w-4 h-4 text-amber-500 inline-block ml-1.5 mb-1" />
-                            )}
-                          </span>
-                          <span
-                            className={`text-xl font-display font-black px-3.5 py-1.5 rounded-xl border ${
-                              m.status === "live"
-                                ? "bg-green-50 text-green-700 border-green-200 font-black animate-pulse"
-                                : m.status === "paused"
-                                ? "bg-amber-50 text-amber-700 border-amber-200 font-black"
-                                : m.status === "completed" && m.winner === "teamB"
-                                ? "bg-red-50 text-red-600 border-red-200/30"
-                                : "bg-slate-50 text-slate-600 border-slate-200/60"
-                            }`}
-                          >
-                            {m.status === "upcoming" ? "—" : m.scoreB}
-                          </span>
-                        </div>
-                      </div>
- 
-                      {/* Footer Details: Notes or Status status bar */}
-                      {(m.notes || m.status === "live" || m.status === "paused" || m.status === "completed") && (
-                        <div className="border-t border-slate-100 pt-4 mt-4 flex items-center justify-between">
-                          <p className="text-slate-400 text-xs italic truncate flex-1 pr-4">
-                            {m.notes || "No notes posted yet."}
-                          </p>
-                          {m.status === "live" && (
-                            <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500 text-white text-[9px] font-black uppercase tracking-widest border border-green-400 shadow-[0_2px_8px_rgba(34,197,94,0.3)] animate-pulse relative">
-                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping absolute" />
-                              <span className="w-1.5 h-1.5 rounded-full bg-white relative" />
-                              Live
-                            </span>
-                          )}
-                          {m.status === "paused" && (
-                            <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest border border-amber-400 shadow-[0_2px_8px_rgba(245,158,11,0.3)]">
-                              <Pause className="w-3.5 h-3.5 text-white" />
-                              Paused
-                            </span>
-                          )}
-                          {m.status === "completed" && (
-                            <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-650 text-green-500 text-[9px] font-black uppercase tracking-widest border border-red-500 shadow-[0_2px_8px_rgba(220,38,38,0.3)]">
-                              <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                              Ended
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                ))}
+                  const colorA = getTeamColor(m.teamA);
+                  const colorB = getTeamColor(m.teamB);
+                  const logoA = getTeamLogo(m.teamA);
+                  const logoB = getTeamLogo(m.teamB);
+
+                  const isLive = m.status === "live" || m.status === "paused";
+                  const isCompleted = m.status === "completed";
+                  const hasScores = m.status !== "upcoming";
+
+                  const isWinningA = hasScores && m.scoreA > m.scoreB;
+                  const isWinningB = hasScores && m.scoreB > m.scoreA;
+
+                  const winnerColor = isCompleted
+                    ? m.winner === "teamA"
+                      ? colorA
+                      : m.winner === "teamB"
+                      ? colorB
+                      : null
+                    : null;
+
+                  return (
+                    <Link href={`/camp-portal/matches/${m._id}`} key={m._id} className="block group">
+                      <div
+  className={`bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full relative overflow-hidden ${
+    m.status === "live"
+      ? "border-green-200 ring-1 ring-green-100/50"
+      : m.status === "paused"
+      ? "border-amber-200 ring-1 ring-amber-100/50"
+      : m.status === "completed"
+      ? "border-slate-200"
+      : "border-slate-200/80 hover:border-slate-300"
+  }`}
+>
+  {/* Minimal Top Status Bar */}
+  {m.status === "live" && <div className="absolute top-0 inset-x-0 h-1 bg-green-500 animate-pulse" />}
+  {m.status === "paused" && <div className="absolute top-0 inset-x-0 h-1 bg-amber-500" />}
+  {m.status === "completed" && <div className="absolute top-0 inset-x-0 h-1 bg-slate-200" />}
+
+  {/* Card Header (Round & Date) */}
+  <div className="flex items-center justify-between mb-4">
+    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+      {m.round}
+    </span>
+    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+      <Clock className="w-3.5 h-3.5 text-slate-300" />
+      {formatDate(m.date)}
+    </span>
+  </div>
+
+  {/* Competitors and Score Section */}
+  <div className="flex flex-col gap-2">
+    
+    {/* Team A Row */}
+    <div className="flex items-center justify-between p-2 -mx-2 rounded-xl hover:bg-slate-50/50 transition-colors">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+          {logoA ? (
+            <img src={logoA} alt={m.teamA} className="w-full h-full object-cover" />
+          ) : (
+            <Icons.Flag className="w-4 h-4 text-slate-300" />
+          )}
+        </div>
+        <span
+          className={`text-sm font-bold uppercase tracking-wide truncate ${
+            m.status === "completed" && m.winner !== "teamA" ? "text-slate-400 font-medium" : "text-slate-800"
+          }`}
+        >
+          {m.teamA}
+          {m.status === "completed" && m.winner === "teamA" && (
+            <Trophy className="w-3.5 h-3.5 text-amber-500 inline-block ml-1.5 mb-0.5" />
+          )}
+        </span>
+      </div>
+
+      {/* Score Box highlighting Primary Color A */}
+      <span
+        className="text-lg font-black px-3 py-1 rounded-xl min-w-[3rem] text-center"
+        style={{
+          color: colorA,
+          backgroundColor: `${colorA}15`, // 15% opacity background for a soft modern pill
+        }}
+      >
+        {m.status === "upcoming" ? "—" : m.scoreA}
+      </span>
+    </div>
+
+    {/* VS Divider (Very clean now) */}
+    <div className="relative text-center my-1">
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full border-t border-slate-100"></div>
+      </div>
+      <span className="relative bg-white px-2 text-[9px] font-black uppercase tracking-widest text-slate-300">
+        VS
+      </span>
+    </div>
+
+    {/* Team B Row */}
+    <div className="flex items-center justify-between p-2 -mx-2 rounded-xl hover:bg-slate-50/50 transition-colors">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+          {logoB ? (
+            <img src={logoB} alt={m.teamB} className="w-full h-full object-cover" />
+          ) : (
+            <Icons.Flag className="w-4 h-4 text-slate-300" />
+          )}
+        </div>
+        <span
+          className={`text-sm font-bold uppercase tracking-wide truncate ${
+            m.status === "completed" && m.winner !== "teamB" ? "text-slate-400 font-medium" : "text-slate-800"
+          }`}
+        >
+          {m.teamB}
+          {m.status === "completed" && m.winner === "teamB" && (
+            <Trophy className="w-3.5 h-3.5 text-amber-500 inline-block ml-1.5 mb-0.5" />
+          )}
+        </span>
+      </div>
+
+      {/* Score Box highlighting Primary Color B */}
+      <span
+        className="text-lg font-black px-3 py-1 rounded-xl min-w-[3rem] text-center"
+        style={{
+          color: colorB,
+          backgroundColor: `${colorB}15`, // 15% opacity background 
+        }}
+      >
+        {m.status === "upcoming" ? "—" : m.scoreB}
+      </span>
+    </div>
+  </div>
+
+  {/* Footer (Notes & Status Badge) */}
+  <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
+    <p className="text-xs text-slate-400 truncate flex-1">
+      {m.notes || "No notes posted yet."}
+    </p>
+
+    {/* Clean Badges */}
+    {m.status === "live" && (
+      <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-600 border border-green-200 text-[10px] font-bold uppercase tracking-wider">
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+        </span>
+        Live
+      </span>
+    )}
+    {m.status === "paused" && (
+      <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 text-amber-600 border border-amber-200 text-[10px] font-bold uppercase tracking-wider">
+        <Pause className="w-3 h-3 text-amber-500" />
+        Paused
+      </span>
+    )}
+    {m.status === "completed" && (
+      <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500 text-white border border-slate-200 text-[10px] font-bold uppercase tracking-wider">
+        <CheckCircle className="w-3 h-3 text-white" />
+        Ended
+      </span>
+    )}
+  </div>
+</div>
+                    </Link>
+                  );
+                })}
               </div>
 
               {filteredMatches.length === 0 && (
@@ -554,57 +550,57 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
               transition={{ duration: 0.3 }}
             >
               {pointsTable.length > 0 ? (
-               <div className="w-full">
-  {/* Mobile Scroll Indicator */}
-  <div className="md:hidden flex justify-end mb-2">
-    <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 animate-pulse">
-      Scroll right for more <span className="text-sm leading-none">→</span>
-    </span>
-  </div>
+                <div className="w-full">
+                  {/* Mobile Scroll Indicator */}
+                  <div className="md:hidden flex justify-end mb-2">
+                    <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 animate-pulse">
+                      Scroll right for more <span className="text-sm leading-none">→</span>
+                    </span>
+                  </div>
 
-  {/* Table Container with Custom Thin Scrollbar */}
-  <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl overflow-x-auto 
+                  {/* Table Container with Custom Thin Scrollbar */}
+                  <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl overflow-x-auto 
     scrollbar-thin 
     [&::-webkit-scrollbar]:h-1.5 
     [&::-webkit-scrollbar-track]:bg-slate-50 
     [&::-webkit-scrollbar-thumb]:bg-slate-300 
     [&::-webkit-scrollbar-thumb]:rounded-full 
     hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
-  >
-    <table className="w-full text-sm min-w-[500px]">
-      <thead>
-        <tr className="text-slate-500 text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-slate-50 border-b border-slate-100">
-          <th className="text-left px-3 sm:px-6 py-3 sm:py-4 w-12 sm:w-20">Rank</th>
-          <th className="text-left px-3 sm:px-6 py-3 sm:py-4">Player / Team</th>
-          <th className="text-center px-3 sm:px-6 py-3 sm:py-4">Played</th>
-          <th className="text-center px-3 sm:px-6 py-3 sm:py-4 bg-green-50/30 text-green-700">Won</th>
-          <th className="text-center px-3 sm:px-6 py-3 sm:py-4 bg-red-50/30 text-red-700">Lost</th>
-          <th className="text-center px-3 sm:px-6 py-3 sm:py-4 bg-slate-50 text-slate-600">Drawn</th>
-          <th className="text-center px-3 sm:px-6 py-3 sm:py-4 bg-[#0B1C4A]/5 text-[#0B1C4A] font-black w-16 sm:w-24">PTS</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-100">
-        {pointsTable.map((row, idx) => (
-          <tr key={row._id} className="hover:bg-slate-50 transition-colors">
-            <td className="px-3 sm:px-6 py-3 sm:py-4 font-display font-black text-slate-800 text-xs sm:text-sm">
-              {row.rank || idx + 1}
-            </td>
-            <td className="px-3 sm:px-6 py-3 sm:py-4 font-bold text-slate-800 uppercase tracking-wide text-xs sm:text-sm whitespace-nowrap">
-              {row.displayName}
-            </td>
-            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-slate-500 font-semibold text-xs sm:text-sm">{row.played}</td>
-            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center bg-green-50/20 text-green-700 font-semibold text-xs sm:text-sm">{row.won}</td>
-            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center bg-red-50/20 text-red-700 font-semibold text-xs sm:text-sm">{row.lost}</td>
-            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center bg-slate-50/50 text-slate-500 font-medium text-xs sm:text-sm">{row.drawn}</td>
-            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center bg-[#0B1C4A]/5 text-[#0B1C4A] font-black text-sm sm:text-base">
-              {row.points}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-</div>
+                  >
+                    <table className="w-full text-sm min-w-[500px]">
+                      <thead>
+                        <tr className="text-slate-500 text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-slate-50 border-b border-slate-100">
+                          <th className="text-left px-3 sm:px-6 py-3 sm:py-4 w-12 sm:w-20">Rank</th>
+                          <th className="text-left px-3 sm:px-6 py-3 sm:py-4">Player / Team</th>
+                          <th className="text-center px-3 sm:px-6 py-3 sm:py-4">Played</th>
+                          <th className="text-center px-3 sm:px-6 py-3 sm:py-4 bg-green-50/30 text-green-700">Won</th>
+                          <th className="text-center px-3 sm:px-6 py-3 sm:py-4 bg-red-50/30 text-red-700">Lost</th>
+                          <th className="text-center px-3 sm:px-6 py-3 sm:py-4 bg-slate-50 text-slate-600">Drawn</th>
+                          <th className="text-center px-3 sm:px-6 py-3 sm:py-4 bg-[#0B1C4A]/5 text-[#0B1C4A] font-black w-16 sm:w-24">PTS</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {pointsTable.map((row, idx) => (
+                          <tr key={row._id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 font-display font-black text-slate-800 text-xs sm:text-sm">
+                              {row.rank || idx + 1}
+                            </td>
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 font-bold text-slate-800 uppercase tracking-wide text-xs sm:text-sm whitespace-nowrap">
+                              {row.displayName}
+                            </td>
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-slate-500 font-semibold text-xs sm:text-sm">{row.played}</td>
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center bg-green-50/20 text-green-700 font-semibold text-xs sm:text-sm">{row.won}</td>
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center bg-red-50/20 text-red-700 font-semibold text-xs sm:text-sm">{row.lost}</td>
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center bg-slate-50/50 text-slate-500 font-medium text-xs sm:text-sm">{row.drawn}</td>
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-center bg-[#0B1C4A]/5 text-[#0B1C4A] font-black text-sm sm:text-base">
+                              {row.points}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               ) : (
                 <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/80 shadow-sm max-w-sm mx-auto">
                   <Trophy className="w-10 h-10 text-slate-300 mx-auto mb-2" />

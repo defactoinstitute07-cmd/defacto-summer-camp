@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   keywords: [
     "defacto summer camp live scores",
     "camp portal",
-    "follow the camp",
+    "View Live Score",
     "summer camp 2026 results",
     "player rankings summer camp",
     "points table summer camp",

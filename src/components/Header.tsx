@@ -22,7 +22,7 @@ export default function Header() {
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
           scrolled
             ? "bg-white/80 backdrop-blur-md border-b border-slate-200/50 py-4 shadow-md shadow-slate-100/50"
-            : "bg-transparent py-6"
+            : "bg-transparent py-4"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,7 +52,7 @@ export default function Header() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E60000] opacity-75" />
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#E60000]" />
                 </span>
-                Follow the Camp
+                View Live Score
               </a>
             </nav>
 
@@ -68,7 +68,7 @@ export default function Header() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E60000] opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E60000]" />
                   </span>
-                  Follow the Camp
+                  View Live Score
                 </span>
               </a>
             </div>
@@ -118,7 +118,7 @@ export default function Header() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
               </span>
-              Follow the Camp
+              View Live Score
             </a>
           </motion.div>
         )}

@@ -451,602 +451,545 @@ export default function MatchesPage() {
         const teamBColor = sportTeams.find(t => t.name === form.teamB)?.color || "#0B1C4A";
         const isLive = form.status === "live" || form.status === "paused";
         return (
-          <Modal title={editing ? "Edit Match" : "Add Match"} onClose={() => setShowForm(false)} maxWidth={isLive ? "max-w-4xl" : "max-w-lg"}>
-            <form onSubmit={handleSave} className="space-y-4 pb-20">
-            {error && <p className="text-red-500 text-sm bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}
+          <Modal 
+  title={editing ? "Edit Match" : "Add Match"} 
+  onClose={() => setShowForm(false)} 
+  maxWidth={(form.status === "live" || form.status === "paused") ? "max-w-5xl" : "max-w-4xl"}
+>
+  <form onSubmit={handleSave} className="space-y-6 pb-24 relative">
+    {error && (
+      <p className="text-red-500 text-sm bg-red-500/10 rounded-xl px-4 py-2.5 border border-red-500/20">
+        {error}
+      </p>
+    )}
+    
+    {/* ==================================================================== */}
+    {/* CASE 1: LIVE OR PAUSED MATCH CONSOLE (DESKTOP DUAL COLUMN)          */}
+    {/* ==================================================================== */}
+    {(form.status === "live" || form.status === "paused") ? (
+      <div className="space-y-6">
+       {/* Status Action Controls */}
+<div className="flex flex-wrap items-center gap-3">
+  {form.status === "live" ? (
+    <button
+      type="button"
+      onClick={() =>
+        handleImmediateStatusUpdate("paused", "Match Paused")
+      }
+      className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
+      bg-gradient-to-r from-amber-500 to-orange-500
+      hover:from-amber-600 hover:to-orange-600
+      text-white text-xs font-bold tracking-wide
+      shadow-lg shadow-amber-500/25
+      border border-amber-400/50
+      transition-all duration-200
+      hover:scale-105 active:scale-95"
+    >
+      <Pause className="w-4 h-4 transition-transform group-hover:scale-110" />
+      Pause Match
+    </button>
+  ) : (
+    <button
+      type="button"
+      onClick={() =>
+        handleImmediateStatusUpdate("live", "Match Resumed")
+      }
+      className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
+      bg-gradient-to-r from-emerald-500 to-green-600
+      hover:from-emerald-600 hover:to-green-700
+      text-white text-xs font-bold tracking-wide
+      shadow-lg shadow-green-500/25
+      border border-green-400/50
+      transition-all duration-200
+      hover:scale-105 active:scale-95"
+    >
+      <Play className="w-4 h-4 fill-white animate-pulse" />
+      Resume Match
+    </button>
+  )}
+
+  <button
+    type="button"
+    onClick={() =>
+      handleImmediateStatusUpdate("completed", "Match Finished")
+    }
+    className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
+    bg-gradient-to-r from-red-500 to-rose-600
+    hover:from-red-600 hover:to-rose-700
+    text-white text-xs font-bold tracking-wide
+    shadow-lg shadow-red-500/25
+    border border-red-400/50
+    transition-all duration-200
+    hover:scale-105 active:scale-95"
+  >
+    <CheckCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
+    End Match
+  </button>
+</div>
+
+        {/* Layout Column Wrapper */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* Left Column: Scoreboard & Sets Matrix */}
+          <div className="lg:col-span-5 space-y-6 bg-slate-50/50 p-4 sm:p-5 border border-slate-200/60 rounded-2xl">
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Score keeping & sets</div>
             
-            {(form.status === "live" || form.status === "paused") ? (
-              <div className="space-y-6">
-                {/* 1. Header showing Status & Controls */}
-                <div className="flex flex-col sm:flex-row items-center gap-3 justify-between bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
-                  <div className="flex items-center gap-2">
-                    {form.status === "live" ? (
-                      <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-green-500 border border-green-400 text-white text-xs font-black uppercase tracking-widest animate-pulse shadow-sm relative">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping absolute" />
-                        <span className="w-1.5 h-1.5 rounded-full bg-white relative" />
-                        Live
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-500 border border-amber-400 text-white text-xs font-black uppercase tracking-widest shadow-sm">
-                        <Pause className="w-3.5 h-3.5 text-white" />
-                        Paused
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Status Action controls */}
-                  <div className="flex items-center gap-2">
-                    {form.status === "live" ? (
-                      <button
-                        type="button"
-                        onClick={() => handleImmediateStatusUpdate("paused", "Match Paused")}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95 shadow-md shadow-amber-500/20 border border-amber-400"
-                      >
-                        <Pause className="w-3.5 h-3.5 text-white" />
-                        Pause Match
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleImmediateStatusUpdate("live", "Match Resumed")}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95 shadow-md shadow-green-600/20 border border-green-500"
-                      >
-                        <Play className="w-3 h-3 text-white fill-white animate-pulse" />
-                        Resume Match
-                      </button>
-                    )}
+            {/* Main Live Scoreboard Panels */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Team A Panel */}
+              <div className="flex flex-col items-center bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-wide truncate max-w-full mb-1">
+                  {form.teamA}
+                </span>
+                <span className="text-5xl font-black text-[#E60000] my-3 select-none">
+                  {form.scoreA}
+                </span>
+                <button
+                  type="button"
+                  disabled={(form.status as string) === "completed"}
+                  onClick={() => handleImmediateScoreUpdate(Math.max(0, form.scoreA - 1), form.scoreB, `Score corrected for ${form.teamA}`)}
+                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 text-xs font-bold rounded-xl border border-slate-200/60 transition-all cursor-pointer active:scale-95 w-full text-center"
+                >
+                  -1 Point
+                </button>
+              </div>
+
+              {/* Team B Panel */}
+              <div className="flex flex-col items-center bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-wide truncate max-w-full mb-1">
+                  {form.teamB}
+                </span>
+                <span className="text-5xl font-black text-[#0B1C4A] my-3 select-none">
+                  {form.scoreB}
+                </span>
+                <button
+                  type="button"
+                  disabled={(form.status as string) === "completed"}
+                  onClick={() => handleImmediateScoreUpdate(form.scoreA, Math.max(0, form.scoreB - 1), `Score corrected for ${form.teamB}`)}
+                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 text-xs font-bold rounded-xl border border-slate-200/60 transition-all cursor-pointer active:scale-95 w-full text-center"
+                >
+                  -1 Point
+                </button>
+              </div>
+            </div>
+
+            {/* Reset Scores Button */}
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={handleResetScore}
+                className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer border border-slate-200/50 shadow-sm"
+              >
+                Reset Scores
+              </button>
+            </div>
+
+            {/* Set Scores Matrix Tracker */}
+            <div className="border-t border-slate-200/60 pt-4">
+              <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Set Scores Matrix</label>
+              <div className="space-y-2 mb-3 max-h-48 overflow-y-auto pr-1">
+                {form.sets.map((set, idx) => (
+                  <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200/60 shadow-sm">
+                    <span className="text-xs font-bold text-slate-500 w-14 shrink-0">Set {idx + 1}</span>
+                    <input
+                      type="number"
+                      min={0}
+                      disabled={(form.status as string) === "completed"}
+                      value={set.scoreA}
+                      onChange={(e) => {
+                        const updatedSets = [...form.sets];
+                        updatedSets[idx].scoreA = Number(e.target.value);
+                        setForm(p => ({ ...p, sets: updatedSets }));
+                        handleImmediateSetsUpdate(updatedSets);
+                      }}
+                      className="w-14 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-center text-xs font-bold focus:outline-none focus:border-slate-400"
+                      placeholder="A"
+                    />
+                    <span className="text-slate-300 text-xs">—</span>
+                    <input
+                      type="number"
+                      min={0}
+                      disabled={(form.status as string) === "completed"}
+                      value={set.scoreB}
+                      onChange={(e) => {
+                        const updatedSets = [...form.sets];
+                        updatedSets[idx].scoreB = Number(e.target.value);
+                        setForm(p => ({ ...p, sets: updatedSets }));
+                        handleImmediateSetsUpdate(updatedSets);
+                      }}
+                      className="w-14 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-center text-xs font-bold focus:outline-none focus:border-slate-400"
+                      placeholder="B"
+                    />
                     <button
                       type="button"
-                      onClick={() => handleImmediateStatusUpdate("completed", "Match Finished")}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-650 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95 shadow-md shadow-red-600/20 border border-red-500"
+                      disabled={(form.status as string) === "completed"}
+                      onClick={() => {
+                        const updatedSets = form.sets.filter((_, sIdx) => sIdx !== idx);
+                        setForm(p => ({ ...p, sets: updatedSets }));
+                        handleImmediateSetsUpdate(updatedSets);
+                      }}
+                      className="text-red-500 hover:text-red-700 disabled:opacity-40 text-xs font-bold ml-auto transition-colors"
                     >
-                      <CheckCircle className="w-3 h-3 text-white" />
-                      End Match
+                      Remove
                     </button>
                   </div>
-                </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                disabled={(form.status as string) === "completed"}
+                onClick={() => {
+                  const updatedSets = [...form.sets, { scoreA: 0, scoreB: 0 }];
+                  setForm(p => ({ ...p, sets: updatedSets }));
+                  handleImmediateSetsUpdate(updatedSets);
+                }}
+                className="px-3 py-2 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 font-bold text-xs rounded-xl transition-colors border border-slate-200 w-full shadow-sm text-center cursor-pointer"
+              >
+                + Add Set Score
+              </button>
+            </div>
+          </div>
 
-                {/* Dual Column Layout on desktop, single column on mobile */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                  
-                  {/* Left Column: Scoreboard & Sets */}
-                  <div className="space-y-6 bg-slate-50/50 p-4 border border-slate-200/60 rounded-2xl">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Score keeping & sets</div>
-                    
-                    {/* 2. Main Live Scoreboard Display */}
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Team A Display Panel */}
-                      <div className="flex flex-col items-center bg-white border border-slate-200/80 rounded-3xl p-5 shadow-sm">
-                        <span className="text-xs font-black text-slate-500 uppercase tracking-wide truncate max-w-full mb-1">
-                          {form.teamA}
-                        </span>
-                        <span className="text-6xl font-black text-[#E60000] my-4 select-none">
-                          {form.scoreA}
-                        </span>
-                        
-                        {/* -1 Point Correction button */}
-                        <button
-                          type="button"
-                          disabled={(form.status as string) === "completed"}
-                          onClick={() => handleImmediateScoreUpdate(Math.max(0, form.scoreA - 1), form.scoreB, `Score corrected for ${form.teamA}`)}
-                          className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 text-xs font-bold rounded-xl border border-slate-200/60 transition-all cursor-pointer active:scale-95 w-full text-center"
-                        >
-                          -1 Point
-                        </button>
-                      </div>
-
-                      {/* Team B Display Panel */}
-                      <div className="flex flex-col items-center bg-white border border-slate-200/80 rounded-3xl p-5 shadow-sm">
-                        <span className="text-xs font-black text-slate-500 uppercase tracking-wide truncate max-w-full mb-1">
-                          {form.teamB}
-                        </span>
-                        <span className="text-6xl font-black text-[#0B1C4A] my-4 select-none">
-                          {form.scoreB}
-                        </span>
-                        
-                        {/* -1 Point Correction button */}
-                        <button
-                          type="button"
-                          disabled={(form.status as string) === "completed"}
-                          onClick={() => handleImmediateScoreUpdate(form.scoreA, Math.max(0, form.scoreB - 1), `Score corrected for ${form.teamB}`)}
-                          className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 text-xs font-bold rounded-xl border border-slate-200/60 transition-all cursor-pointer active:scale-95 w-full text-center"
-                        >
-                          -1 Point
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 3. Reset Scores option */}
-                    <div className="flex justify-center">
-                      <button
-                        type="button"
-                        onClick={handleResetScore}
-                        className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-450 hover:text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer border border-slate-200/50 shadow-sm"
-                      >
-                        Reset Scores
-                      </button>
-                    </div>
-
-                    {/* 4. Set Scores Tracker */}
-                    <div className="border-t border-slate-200/60 pt-4">
-                      <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Set Scores Matrix</label>
-                      <div className="space-y-2 mb-2">
-                        {form.sets.map((set, idx) => (
-                          <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200/60">
-                            <span className="text-xs font-bold text-slate-500 w-16">Set {idx + 1}</span>
-                            <input
-                              type="number"
-                              min={0}
-                              disabled={(form.status as string) === "completed"}
-                              value={set.scoreA}
-                              onChange={(e) => {
-                                const updatedSets = [...form.sets];
-                                updatedSets[idx].scoreA = Number(e.target.value);
-                                setForm(p => ({ ...p, sets: updatedSets }));
-                                handleImmediateSetsUpdate(updatedSets);
-                              }}
-                              className="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-center text-xs disabled:opacity-50"
-                              placeholder="A"
-                            />
-                            <span className="text-slate-400 text-xs">—</span>
-                            <input
-                              type="number"
-                              min={0}
-                              disabled={(form.status as string) === "completed"}
-                              value={set.scoreB}
-                              onChange={(e) => {
-                                const updatedSets = [...form.sets];
-                                updatedSets[idx].scoreB = Number(e.target.value);
-                                setForm(p => ({ ...p, sets: updatedSets }));
-                                handleImmediateSetsUpdate(updatedSets);
-                              }}
-                              className="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-center text-xs disabled:opacity-50"
-                              placeholder="B"
-                            />
-                            <button
-                              type="button"
-                              disabled={(form.status as string) === "completed"}
-                              onClick={() => {
-                                const updatedSets = form.sets.filter((_, sIdx) => sIdx !== idx);
-                                setForm(p => ({ ...p, sets: updatedSets }));
-                                handleImmediateSetsUpdate(updatedSets);
-                              }}
-                              className="text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs ml-auto"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        disabled={(form.status as string) === "completed"}
-                        onClick={() => {
-                          const updatedSets = [...form.sets, { scoreA: 0, scoreB: 0 }];
-                          setForm(p => ({ ...p, sets: updatedSets }));
-                          handleImmediateSetsUpdate(updatedSets);
-                        }}
-                        className="px-3 py-1.5 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 font-bold text-xs rounded-lg transition-colors border border-slate-200 w-full cursor-pointer shadow-sm text-center"
-                      >
-                        + Add Set Score
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Predefined log templates & Custom timeline events logger */}
-                  <div className="space-y-6 bg-slate-50/50 p-4 border border-slate-200/60 rounded-2xl">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Timeline events & logs</div>
-                    
-                    {/* 5. Predefined Log templates */}
-                    <div>
-                      <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">
-                        Quick Log templates
-                      </label>
-                      <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto bg-white p-2.5 rounded-xl border border-slate-200/60">
-                        {[
-                          "Point Scored",
-                          "Goal Scored",
-                          "Ace Served",
-                          "Fault",
-                          "Timeout Called",
-                          "Yellow Card",
-                          "Red Card",
-                          "Half Time",
-                          "Substitution",
-                          "Match Started",
-                        ].map(template => (
-                          <button
-                            key={template}
-                            type="button"
-                            disabled={(form.status as string) === "completed"}
-                            onClick={() => {
-                              const eventText = `${template} - ${form.teamA} (${form.scoreA}) vs ${form.teamB} (${form.scoreB})`;
-                              handleImmediateTimelineUpdate(eventText);
-                            }}
-                            className="px-2.5 py-1.5 bg-slate-50 hover:bg-red-50 hover:text-[#E60000] border border-slate-200 text-slate-600 text-[10px] font-bold rounded-lg transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {template}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* 6. Custom Timeline Logger */}
-                    <div className="border-t border-slate-200/60 pt-4">
-                      <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Custom Event Log</label>
-                      <div className="flex gap-2 mb-3">
-                        <input
-                          id="new-live-event-text"
-                          type="text"
-                          disabled={(form.status as string) === "completed"}
-                          placeholder="e.g. Spiked by A / Timeout B"
-                          className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none disabled:opacity-50"
-                        />
-                        <button
-                          type="button"
-                          disabled={(form.status as string) === "completed"}
-                          onClick={() => {
-                            const el = document.getElementById("new-live-event-text") as HTMLInputElement;
-                            const textVal = el?.value?.trim();
-                            if (!textVal) return;
-                            handleImmediateTimelineUpdate(textVal);
-                            if (el) el.value = "";
-                          }}
-                          className="px-4 py-2 bg-[#0B1C4A] hover:bg-[#0b1c4a]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                        >
-                          Log
-                        </button>
-                      </div>
-
-                      <div className="space-y-1.5 max-h-36 overflow-y-auto bg-white p-2.5 rounded-xl border border-slate-200/60 shadow-inner">
-                        {form.timeline.map((event, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-200/50 last:border-0">
-                            <span className="text-slate-400 font-mono text-[9px]">{event.time}</span>
-                            <span className="text-slate-800 font-medium px-2 flex-1 truncate">{event.text}</span>
-                            <span className="font-bold text-[#E60000] bg-[#E60000]/10 px-1.5 py-0.5 rounded text-[9px] mr-2">
-                              {event.scoreA} - {event.scoreB}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updatedTimeline = form.timeline.filter((_, tIdx) => tIdx !== idx);
-                                setForm(p => ({ ...p, timeline: updatedTimeline }));
-                                handleImmediateTimelineWrite(updatedTimeline);
-                              }}
-                              className="text-slate-400 hover:text-red-500 font-bold p-1 cursor-pointer"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                        {form.timeline.length === 0 && (
-                          <p className="text-center text-slate-400 text-xs py-2">No timeline events recorded.</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* 7. Bottom Sticky Score Incrementor Console (Large Team Colored Buttons) */}
-                <div className="sticky -bottom-6 bg-white/95 backdrop-blur-sm border-t border-slate-200/80 py-4 -mx-6 px-6 z-30 flex gap-4 p-4 shadow-xl">
-                  {/* [+1 Team A] */}
+          {/* Right Column: Timeline Event Templates & Activity Logs */}
+          <div className="lg:col-span-7 space-y-6 bg-slate-50/50 p-4 sm:p-5 border border-slate-200/60 rounded-2xl">
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Timeline events & logs</div>
+            
+            {/* Quick Log Templates Panel */}
+            <div>
+              <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">
+                Quick Log templates
+              </label>
+              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto bg-white p-3 rounded-xl border border-slate-200/60 shadow-inner">
+                {[
+                  "Point Scored",
+                  "Goal Scored",
+                  "Ace Served",
+                  "Fault",
+                  "Timeout Called",
+                  "Yellow Card",
+                  "Red Card",
+                  "Half Time",
+                  "Substitution",
+                  "Match Started",
+                ].map(template => (
                   <button
+                    key={template}
                     type="button"
                     disabled={(form.status as string) === "completed"}
-                    onClick={() => handleImmediateScoreUpdate(form.scoreA + 1, form.scoreB, `Point scored by ${form.teamA}`)}
-                    style={{ backgroundColor: teamAColor, color: getContrastColor(teamAColor) }}
-                    className="flex-1 h-16 font-black text-xs uppercase tracking-wider rounded-2xl flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all shadow-md border-b-4 border-black/30 hover:brightness-90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => {
+                      const eventText = `${template} - ${form.teamA} (${form.scoreA}) vs ${form.teamB} (${form.scoreB})`;
+                      handleImmediateTimelineUpdate(eventText);
+                    }}
+                    className="px-2.5 py-1.5 bg-slate-50 hover:bg-red-50 hover:text-[#E60000] border border-slate-200/60 text-slate-600 text-[10px] font-bold rounded-lg transition-all cursor-pointer active:scale-95 disabled:opacity-50"
                   >
-                    <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: getContrastColor(teamAColor), opacity: 0.8 }}>{form.teamA || "Team A"}</span>
-                    <span className="text-xs font-black">+1 Team A ({form.scoreA + 1})</span>
+                    {template}
                   </button>
+                ))}
+              </div>
+            </div>
 
-                  {/* [+1 Team B] */}
+            {/* Custom Event Logger */}
+            <div className="border-t border-slate-200/60 pt-4">
+              <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Custom Event Log</label>
+              <div className="flex gap-2 mb-3">
+                <input
+                  id="new-live-event-text"
+                  type="text"
+                  disabled={(form.status as string) === "completed"}
+                  placeholder="e.g. Spiked by A / Timeout B"
+                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-400 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  disabled={(form.status as string) === "completed"}
+                  onClick={() => {
+                    const el = document.getElementById("new-live-event-text") as HTMLInputElement;
+                    const textVal = el?.value?.trim();
+                    if (!textVal) return;
+                    handleImmediateTimelineUpdate(textVal);
+                    if (el) el.value = "";
+                  }}
+                  className="px-4 py-2 bg-[#0B1C4A] hover:bg-[#0b1c4a]/90 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Log
+                </button>
+              </div>
+
+              {/* Feed List Container */}
+              <div className="space-y-1.5 max-h-48 overflow-y-auto bg-white p-3 rounded-xl border border-slate-200/60 shadow-inner">
+                {form.timeline.map((event, idx) => (
+                  <div key={idx} className="flex items-center justify-between gap-2 text-xs py-2 border-b border-slate-100 last:border-0">
+                    <span className="text-slate-400 font-mono text-[9px] shrink-0">{event.time}</span>
+                    <span className="text-slate-800 font-medium flex-1 truncate">{event.text}</span>
+                    <span className="font-bold text-[#E60000] bg-[#E60000]/10 px-1.5 py-0.5 rounded text-[9px] shrink-0">
+                      {event.scoreA} - {event.scoreB}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updatedTimeline = form.timeline.filter((_, tIdx) => tIdx !== idx);
+                        setForm(p => ({ ...p, timeline: updatedTimeline }));
+                        handleImmediateTimelineWrite(updatedTimeline);
+                      }}
+                      className="text-slate-400 hover:text-red-500 font-bold p-1 transition-colors cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+                {form.timeline.length === 0 && (
+                  <p className="text-center text-slate-400 text-xs py-4">No timeline events recorded.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 7. Bottom Sticky Real-Time Increment Console */}
+        <div className="fixed sm:absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 z-40 flex gap-4 shadow-[0_-8px_30px_rgb(0,0,0,0.06)] rounded-b-3xl">
+          <div className="flex gap-3 w-full max-w-4xl mx-auto">
+            <button
+              type="button"
+              disabled={(form.status as string) === "completed"}
+              onClick={() => handleImmediateScoreUpdate(form.scoreA + 1, form.scoreB, `Point scored by ${form.teamA}`)}
+              style={{ backgroundColor: teamAColor, color: getContrastColor(teamAColor) }}
+              className="flex-1 h-14 font-black text-xs uppercase tracking-wider rounded-xl flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all shadow-md border-b-4 border-black/20 hover:brightness-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <span className="text-[9px] font-bold opacity-80 truncate max-w-[150px]">{form.teamA || "Team A"}</span>
+              <span className="text-xs font-black">+1 Point ({form.scoreA + 1})</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={(form.status as string) === "completed"}
+              onClick={() => handleImmediateScoreUpdate(form.scoreA, form.scoreB + 1, `Point scored by ${form.teamB}`)}
+              style={{ backgroundColor: teamBColor, color: getContrastColor(teamBColor) }}
+              className="flex-1 h-14 font-black text-xs uppercase tracking-wider rounded-xl flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all shadow-md border-b-4 border-black/20 hover:brightness-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <span className="text-[9px] font-bold opacity-80 truncate max-w-[150px]">{form.teamB || "Team B"}</span>
+              <span className="text-xs font-black">+1 Point ({form.scoreB + 1})</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : (
+      
+      // ==================================================================== 
+      // CASE 2: GENERAL UPCOMING/COMPLETED SCREEN LAYOUT (RESPONSIVE GRID)  
+      // ==================================================================== 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        
+        {/* Left Column: Core Configurations & Identifiers */}
+        <div className="space-y-4">
+          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Match Metadata</div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <SelectField label="Sport" value={form.sport} options={sports} onChange={v => f("sport",v)} disabled={admin?.role !== "superadmin"} />
+            <SelectField label="Status" value={form.status} options={["upcoming","live","paused","completed"]} onChange={v => f("status",v)} />
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {sportTeams.length > 0 ? (
+              <SelectField label="Team A *" value={form.teamA} options={sportTeams.map(t => t.name)} onChange={v => f("teamA",v)} disabled={admin?.role !== "superadmin"} />
+            ) : (
+              <TextField label="Team A *" value={form.teamA} onChange={v => f("teamA",v)} disabled={admin?.role !== "superadmin"} />
+            )}
+            {sportTeams.length > 0 ? (
+              <SelectField label="Team B *" value={form.teamB} options={sportTeams.map(t => t.name)} onChange={v => f("teamB",v)} disabled={admin?.role !== "superadmin"} />
+            ) : (
+              <TextField label="Team B *" value={form.teamB} onChange={v => f("teamB",v)} disabled={admin?.role !== "superadmin"} />
+            )}
+          </div>
+
+          <TextField label="Date & Time" type="datetime-local" value={form.date} onChange={v => f("date",v)} disabled={admin?.role !== "superadmin"} />
+          
+          <div className="grid grid-cols-2 gap-3">
+            <TextField label="Round" value={form.round} onChange={v => f("round",v)} disabled={admin?.role !== "superadmin"} />
+            <TextField label="Maximum Points" type="number" value={String(form.maxPoints || 0)} onChange={v => f("maxPoints",Number(v))} disabled={(form.status as string) === "completed"} />
+          </div>
+          
+          <TextField label="Notes / Information" value={form.notes} onChange={v => f("notes",v)} />
+        </div>
+
+        {/* Right Column: Referee Controllers & Matrices */}
+        <div className="space-y-4">
+          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Scores & Parameters</div>
+          
+          {/* Quick Score Adjust Console */}
+          <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-3 shadow-sm">
+            <div className="text-center font-bold text-[10px] uppercase tracking-widest text-slate-400">
+              Referee Score Board
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {/* Team A Adjuster */}
+              <div className="flex flex-col items-center p-3 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+                <div className="text-[10px] font-black text-slate-500 truncate max-w-full mb-1 uppercase" style={{ color: teamAColor }}>
+                  {form.teamA || "Team A"}
+                </div>
+                <div className="text-3xl font-black mb-2" style={{ color: teamAColor }}>
+                  {form.scoreA}
+                </div>
+                <div className="flex gap-1.5 w-full">
                   <button
                     type="button"
-                    disabled={(form.status as string) === "completed"}
-                    onClick={() => handleImmediateScoreUpdate(form.scoreA, form.scoreB + 1, `Point scored by ${form.teamB}`)}
-                    style={{ backgroundColor: teamBColor, color: getContrastColor(teamBColor) }}
-                    className="flex-1 h-16 font-black text-xs uppercase tracking-wider rounded-2xl flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all shadow-md border-b-4 border-black/30 hover:brightness-90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setForm(p => ({ ...p, scoreA: Math.max(0, p.scoreA - 1) }))}
+                    className="flex-1 py-1.5 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold rounded-lg border border-slate-200/60 text-xs transition-colors cursor-pointer"
                   >
-                    <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: getContrastColor(teamBColor), opacity: 0.8 }}>{form.teamB || "Team B"}</span>
-                    <span className="text-xs font-black">+1 Team B ({form.scoreB + 1})</span>
+                    -1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, scoreA: p.scoreA + 1 }))}
+                    style={{ backgroundColor: teamAColor, color: getContrastColor(teamAColor) }}
+                    className="flex-[2] py-1.5 flex items-center justify-center font-bold rounded-lg text-xs transition-transform active:scale-95 cursor-pointer"
+                  >
+                    +1
                   </button>
                 </div>
               </div>
-            ) : (
-              // General Upcoming/Completed Form
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <SelectField label="Sport" value={form.sport} options={sports} onChange={v => f("sport",v)} disabled={admin?.role !== "superadmin"} />
-                  <SelectField label="Status" value={form.status} options={["upcoming","live","paused","completed"]} onChange={v => f("status",v)} />
+
+              {/* Team B Adjuster */}
+              <div className="flex flex-col items-center p-3 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+                <div className="text-[10px] font-black text-slate-500 truncate max-w-full mb-1 uppercase" style={{ color: teamBColor }}>
+                  {form.teamB || "Team B"}
                 </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  {sportTeams.length > 0 ? (
-                    <SelectField label="Team A *" value={form.teamA} options={sportTeams.map(t => t.name)} onChange={v => f("teamA",v)} disabled={admin?.role !== "superadmin"} />
-                  ) : (
-                    <TextField label="Team A *" value={form.teamA} onChange={v => f("teamA",v)} disabled={admin?.role !== "superadmin"} />
-                  )}
-                  {sportTeams.length > 0 ? (
-                    <SelectField label="Team B *" value={form.teamB} options={sportTeams.map(t => t.name)} onChange={v => f("teamB",v)} disabled={admin?.role !== "superadmin"} />
-                  ) : (
-                    <TextField label="Team B *" value={form.teamB} onChange={v => f("teamB",v)} disabled={admin?.role !== "superadmin"} />
-                  )}
+                <div className="text-3xl font-black mb-2" style={{ color: teamBColor }}>
+                  {form.scoreB}
                 </div>
-
-                {/* Quick Score Adjust Console */}
-                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-4">
-                  <div className="text-center font-bold text-[10px] uppercase tracking-widest text-slate-400">
-                    Referee Score Board
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Team A Adjuster */}
-                    <div className="flex flex-col items-center p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
-                      <div className="text-xs font-black text-slate-600 truncate max-w-full mb-2 uppercase" style={{ color: teamAColor }}>
-                        {form.teamA || "Team A"}
-                      </div>
-                      <div className="text-4xl font-black mb-3" style={{ color: teamAColor }}>
-                        {form.scoreA}
-                      </div>
-                      <div className="flex gap-2 w-full">
-                        <button
-                          type="button"
-                          onClick={() => setForm(p => ({ ...p, scoreA: Math.max(0, p.scoreA - 1) }))}
-                          className="flex-1 h-12 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold rounded-xl border border-slate-200/60 text-sm active:scale-95 transition-all cursor-pointer"
-                        >
-                          -1
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setForm(p => ({ ...p, scoreA: p.scoreA + 1 }))}
-                          style={{ backgroundColor: teamAColor, color: getContrastColor(teamAColor) }}
-                          className="flex-2 h-12 flex items-center justify-center font-bold rounded-xl text-sm active:scale-95 transition-all hover:brightness-90 cursor-pointer"
-                        >
-                          +1
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Team B Adjuster */}
-                    <div className="flex flex-col items-center p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
-                      <div className="text-xs font-black text-slate-600 truncate max-w-full mb-2 uppercase" style={{ color: teamBColor }}>
-                        {form.teamB || "Team B"}
-                      </div>
-                      <div className="text-4xl font-black mb-3" style={{ color: teamBColor }}>
-                        {form.scoreB}
-                      </div>
-                      <div className="flex gap-2 w-full">
-                        <button
-                          type="button"
-                          onClick={() => setForm(p => ({ ...p, scoreB: Math.max(0, p.scoreB - 1) }))}
-                          className="flex-1 h-12 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold rounded-xl border border-slate-200/60 text-sm active:scale-95 transition-all cursor-pointer"
-                        >
-                          -1
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setForm(p => ({ ...p, scoreB: p.scoreB + 1 }))}
-                          style={{ backgroundColor: teamBColor, color: getContrastColor(teamBColor) }}
-                          className="flex-2 h-12 flex items-center justify-center font-bold rounded-xl text-sm active:scale-95 transition-all hover:brightness-90 cursor-pointer"
-                        >
-                          +1
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Underlying numeric inputs for manual entry */}
-                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-                    <TextField label="Manual Score A" type="number" value={String(form.scoreA)} onChange={v => f("scoreA",Number(v))} />
-                    <TextField label="Manual Score B" type="number" value={String(form.scoreB)} onChange={v => f("scoreB",Number(v))} />
-                  </div>
-                </div>
-
-                <TextField label="Date & Time" type="datetime-local" value={form.date} onChange={v => f("date",v)} disabled={admin?.role !== "superadmin"} />
-                <div className="grid grid-cols-2 gap-3">
-                  <TextField label="Round" value={form.round} onChange={v => f("round",v)} disabled={admin?.role !== "superadmin"} />
-                  <TextField label="Maximum Points" type="number" value={String(form.maxPoints || 0)} onChange={v => f("maxPoints",Number(v))} disabled={(form.status as string) === "completed"} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <TextField label="Manual Score A" type="number" value={String(form.scoreA)} onChange={v => f("scoreA",Number(v))} disabled={(form.status as string) === "completed"} />
-                  <TextField label="Manual Score B" type="number" value={String(form.scoreB)} onChange={v => f("scoreB",Number(v))} disabled={(form.status as string) === "completed"} />
-                </div>
-                <TextField label="Winner (teamA/teamB/draw)" value={form.winner} onChange={v => f("winner",v)} disabled={admin?.role !== "superadmin" || (form.status as string) === "completed"} />
-                <TextField label="Notes" value={form.notes} onChange={v => f("notes",v)} />
-
-                {(form.status === "live" || (form.status as string) === "completed") && (
-                  <>
-                    <div className="border-t border-slate-155 pt-3 mt-2">
-                      <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Set Scores</label>
-                      <div className="space-y-2 mb-2">
-                        {form.sets.map((set, idx) => (
-                          <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                            <span className="text-xs font-bold text-slate-500 w-16">Set {idx + 1}</span>
-                            <input
-                              type="number"
-                              min={0}
-                              value={set.scoreA}
-                              onChange={(e) => {
-                                const updatedSets = [...form.sets];
-                                updatedSets[idx].scoreA = Number(e.target.value);
-                                setForm(p => ({ ...p, sets: updatedSets }));
-                              }}
-                              className="w-16 px-2 py-1 bg-white border border-slate-200 rounded text-center text-xs"
-                              placeholder="A"
-                            />
-                            <span className="text-slate-400 text-xs">—</span>
-                            <input
-                              type="number"
-                              min={0}
-                              value={set.scoreB}
-                              onChange={(e) => {
-                                const updatedSets = [...form.sets];
-                                updatedSets[idx].scoreB = Number(e.target.value);
-                                setForm(p => ({ ...p, sets: updatedSets }));
-                              }}
-                              className="w-16 px-2 py-1 bg-white border border-slate-200 rounded text-center text-xs"
-                              placeholder="B"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updatedSets = form.sets.filter((_, sIdx) => sIdx !== idx);
-                                setForm(p => ({ ...p, sets: updatedSets }));
-                              }}
-                              className="text-red-500 hover:text-red-700 text-xs ml-auto"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setForm(p => ({ ...p, sets: [...p.sets, { scoreA: 0, scoreB: 0 }] }));
-                        }}
-                        className="px-3 py-1.5 bg-slate-150 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition-colors border border-slate-200 w-full cursor-pointer"
-                      >
-                        + Add Set Score
-                      </button>
-                    </div>
-
-                    {/* Predefined Quick Event Templates */}
-                    <div className="border-t border-slate-155 pt-3 mt-2">
-                      <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">
-                        Quick Timeline Log templates
-                      </label>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {[
-                          "Point Scored",
-                          "Goal Scored",
-                          "Ace Served",
-                          "Fault",
-                          "Timeout Called",
-                          "Yellow Card",
-                          "Red Card",
-                          "Half Time",
-                          "Substitution",
-                          "Match Started",
-                        ].map(template => (
-                          <button
-                            key={template}
-                            type="button"
-                            onClick={() => {
-                              const timeVal = new Date().toLocaleTimeString("en-IN", {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                              });
-                              const newEvent = {
-                                scoreA: form.scoreA,
-                                scoreB: form.scoreB,
-                                text: `${template} - ${form.teamA} (${form.scoreA}) vs ${form.teamB} (${form.scoreB})`,
-                                time: timeVal,
-                              };
-                              setForm(p => ({
-                                ...p,
-                                timeline: [...p.timeline, newEvent],
-                              }));
-                            }}
-                            className="px-2.5 py-1.5 bg-slate-50 hover:bg-red-50 hover:text-[#E60000] border border-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-95"
-                          >
-                            {template}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="border-t border-slate-155 pt-3 mt-2">
-                      <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Custom Timeline Event</label>
-                      <div className="flex gap-2 mb-3">
-                        <input
-                          id="new-event-text"
-                          type="text"
-                          placeholder="e.g. Spiked by A / Timeout B"
-                          className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const el = document.getElementById("new-event-text") as HTMLInputElement;
-                            const textVal = el?.value?.trim();
-                            if (!textVal) return;
-                            const timeVal = new Date().toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                            const newEvent = {
-                              scoreA: form.scoreA,
-                              scoreB: form.scoreB,
-                              text: textVal,
-                              time: timeVal,
-                            };
-                            setForm(p => ({ ...p, timeline: [...p.timeline, newEvent] }));
-                            if (el) el.value = "";
-                          }}
-                          className="px-4 py-2 bg-[#0B1C4A] hover:bg-[#0b1c4a]/90 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                        >
-                          Add
-                        </button>
-                      </div>
-
-                      <div className="space-y-1.5 max-h-32 overflow-y-auto bg-slate-50 p-2 rounded-xl border border-slate-100">
-                        {form.timeline.map((event, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-200/50 last:border-0">
-                            <span className="text-slate-400 font-mono text-[9px]">{event.time}</span>
-                            <span className="text-slate-800 font-medium px-2 flex-1 truncate">{event.text}</span>
-                            <span className="font-bold text-[#E60000] bg-[#E60000]/10 px-1.5 py-0.5 rounded text-[9px] mr-2">
-                              {event.scoreA} - {event.scoreB}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updatedTimeline = form.timeline.filter((_, tIdx) => tIdx !== idx);
-                                setForm(p => ({ ...p, timeline: updatedTimeline }));
-                              }}
-                              className="text-slate-400 hover:text-red-500 font-bold p-1 cursor-pointer"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                        {form.timeline.length === 0 && (
-                          <p className="text-center text-slate-400 text-xs py-2">No timeline events recorded.</p>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Sticky Action Footer */}
-                <div className="sticky -bottom-6 bg-white/95 backdrop-blur-sm border-t border-slate-100 py-4 -mx-6 px-6 z-20 flex gap-3 flex-shrink-0">
+                <div className="flex gap-1.5 w-full">
                   <button
                     type="button"
-                    onClick={() => setShowForm(false)}
-                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center"
+                    onClick={() => setForm(p => ({ ...p, scoreB: Math.max(0, p.scoreB - 1) }))}
+                    className="flex-1 py-1.5 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold rounded-lg border border-slate-200/60 text-xs transition-colors cursor-pointer"
                   >
-                    Cancel
+                    -1
                   </button>
                   <button
-                    type="submit"
-                    disabled={saving}
-                    className="flex-2 py-3 bg-[#E60000] hover:bg-red-700 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-red-500/10 cursor-pointer"
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, scoreB: p.scoreB + 1 }))}
+                    style={{ backgroundColor: teamBColor, color: getContrastColor(teamBColor) }}
+                    className="flex-[2] py-1.5 flex items-center justify-center font-bold rounded-lg text-xs transition-transform active:scale-95 cursor-pointer"
                   >
-                    {saving ? (
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" /> Save Update
-                      </>
-                    )}
+                    +1
                   </button>
                 </div>
-              </>
-            )}
-          </form>
-        </Modal>
+              </div>
+            </div>
+
+            {/* Manual Scores Fields (Clean & single execution instance) */}
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200/60">
+              <TextField label="Manual Score A" type="number" value={String(form.scoreA)} onChange={v => f("scoreA",Number(v))} disabled={(form.status as string) === "completed"} />
+              <TextField label="Manual Score B" type="number" value={String(form.scoreB)} onChange={v => f("scoreB",Number(v))} disabled={(form.status as string) === "completed"} />
+            </div>
+          </div>
+
+          <SelectField 
+            label="Winner Decided" 
+            value={form.winner} 
+            options={["", "teamA", "teamB", "draw"]} 
+            onChange={v => f("winner", v)} 
+            disabled={admin?.role !== "superadmin" || (form.status as string) === "completed"} 
+          />
+
+          {/* Fallback sets logger matrix for post-match edit */}
+          {((form.status as string) === "completed") && (
+            <div className="border-t border-slate-200/60 pt-3">
+              <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Set Scores Overrides</label>
+              <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                {form.sets.map((set, idx) => (
+                  <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200/60">
+                    <span className="text-xs font-bold text-slate-500 w-14">Set {idx + 1}</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={set.scoreA}
+                      onChange={(e) => {
+                        const updatedSets = [...form.sets];
+                        updatedSets[idx].scoreA = Number(e.target.value);
+                        setForm(p => ({ ...p, sets: updatedSets }));
+                      }}
+                      className="w-14 px-2 py-1 bg-white border border-slate-200 rounded text-center text-xs font-semibold focus:outline-none"
+                    />
+                    <span className="text-slate-400 text-xs">—</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={set.scoreB}
+                      onChange={(e) => {
+                        const updatedSets = [...form.sets];
+                        updatedSets[idx].scoreB = Number(e.target.value);
+                        setForm(p => ({ ...p, sets: updatedSets }));
+                      }}
+                      className="w-14 px-2 py-1 bg-white border border-slate-200 rounded text-center text-xs font-semibold focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updatedSets = form.sets.filter((_, sIdx) => sIdx !== idx);
+                        setForm(p => ({ ...p, sets: updatedSets }));
+                      }}
+                      className="text-red-500 hover:text-red-700 text-xs font-medium ml-auto"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm(p => ({ ...p, sets: [...p.sets, { scoreA: 0, scoreB: 0 }] }))}
+                className="px-3 py-1.5 mt-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition-colors border border-slate-200/60 w-full text-center cursor-pointer"
+              >
+                + Add Set Score
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Sticky Action Footer for upcoming/completed form */}
+        <div className="fixed sm:absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 z-40 flex gap-3 rounded-b-3xl">
+          <div className="flex gap-3 w-full max-w-4xl mx-auto">
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-[2] py-3 bg-[#E60000] hover:bg-red-700 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-red-500/10 cursor-pointer"
+            >
+              {saving ? (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Save className="w-4 h-4" /> Save Update
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </form>
+</Modal>
         );
+
+
+
+
+
+
+
+
+
+
+
+
+        
       })()}
     </div>
   );

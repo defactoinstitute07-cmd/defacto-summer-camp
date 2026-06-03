@@ -12,7 +12,9 @@ import {
   Flag,
   AlertCircle,
   Pause,
-  CheckCircle
+  CheckCircle,
+  Eye,
+  Users
 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -48,6 +50,7 @@ interface Match {
   sets?: SetScore[];
   timeline?: TimelineEvent[];
   maxPoints?: number;
+  views?: number;
 }
 
 interface MatchDetailsResponse {
@@ -132,6 +135,7 @@ const normalizeMatchDetails = (value: unknown): MatchDetailsResponse | null => {
           time: stringValue(event.time),
         })),
       maxPoints,
+      views: typeof rawMatch.views === "number" ? rawMatch.views : 0,
     },
     teamALogo: stringValue(payload.teamALogo),
     teamBLogo: stringValue(payload.teamBLogo),
@@ -154,7 +158,8 @@ const createFallbackData = (): MatchDetailsResponse => ({
     winner: "",
     notes: "",
     sets: [],
-    timeline: []
+    timeline: [],
+    views: 0
   },
   teamALogo: "",
   teamBLogo: "",
@@ -208,10 +213,27 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [connectionStatus, setConnectionStatus] = useState<"live" | "reconnecting" | "delayed">("live");
+  const [activeViewers, setActiveViewers] = useState<number>(0);
 
   const logContainerRef = useRef<HTMLDivElement | null>(null);
   const disconnectedAtRef = useRef<number | null>(null);
   const pollingRef        = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Increment view count on mount
+  useEffect(() => {
+    if (!matchId) return;
+    const incrementViews = async () => {
+      try {
+        await fetch(cleanUrl(`${API}/matches/${matchId}/view`), {
+          method: "PATCH",
+          cache: "no-store",
+        });
+      } catch (err) {
+        console.warn("Failed to increment match view count:", err);
+      }
+    };
+    void incrementViews();
+  }, [matchId]);
 
   // Auto-scroll play logs on update
   useEffect(() => {
@@ -301,6 +323,23 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
       setData(nextData);
       setError("");
       setLoading(false);
+    });
+
+    socket.on("activeViewers", (data: { count: number }) => {
+      setActiveViewers(data.count);
+    });
+
+    socket.on("viewsUpdated", (data: { views: number }) => {
+      setData((prev) => {
+        if (!prev?.match) return prev;
+        return {
+          ...prev,
+          match: {
+            ...prev.match,
+            views: data.views,
+          },
+        };
+      });
     });
 
     socket.on("matchUpdated", (updatedMatch: unknown) => {
@@ -501,6 +540,29 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
     Back
   </button>
   
+  {/* View & Live Counters */}
+  <div className="flex items-center gap-2 sm:gap-3">
+    {/* Active Viewers Count */}
+    {activeViewers > 0 && (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-green-50 border border-green-100 rounded-xl shadow-sm text-green-600 animate-pulse">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 animate-ping opacity-75"></span>
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+        </span>
+        <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">
+          {activeViewers} live
+        </span>
+      </div>
+    )}
+
+    {/* Total Views Count */}
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 border border-slate-200 rounded-xl shadow-sm text-slate-600">
+      <Eye className="w-3.5 h-3.5" />
+      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+        {match.views || 0} Views
+      </span>
+    </div>
+  </div>
 
 </header>
 

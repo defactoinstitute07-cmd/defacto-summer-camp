@@ -20,6 +20,7 @@ router.get("/", optionalProtect, ctrl.getAllMatches);
 router.get("/live", ctrl.getLiveMatches);
 router.get("/:id/score", optionalProtect, ctrl.getMatchScore);
 router.get("/:id", optionalProtect, ctrl.getMatch);
+router.patch("/:id/view", ctrl.incrementMatchViews);
 
 // Protected
 router.post("/", protect, validation, ctrl.createMatch);

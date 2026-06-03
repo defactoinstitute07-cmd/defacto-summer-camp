@@ -256,17 +256,26 @@ if (!process.env.VERCEL) {
   io.on("connection", (socket) => {
     console.log(`📡 Socket connected: ${socket.id}`);
 
+    const broadcastActiveViewers = (matchId) => {
+      if (!matchId) return;
+      const room = io.sockets.adapter.rooms.get(`match:${matchId}`);
+      const activeCount = room ? room.size : 0;
+      io.to(`match:${matchId}`).emit("activeViewers", { count: activeCount });
+    };
+
     // Allow scoreboards or admins to join match-specific rooms
     socket.on("joinMatch", (matchId) => {
       if (matchId) {
         socket.join(`match:${matchId}`);
         console.log(`📝 Socket ${socket.id} joined room: match:${matchId}`);
+        broadcastActiveViewers(matchId);
       }
     });
 
     socket.on("rejoin-match", async (matchId) => {
       if (matchId) {
         socket.join(`match:${matchId}`);
+        broadcastActiveViewers(matchId);
         const cachedMatch = matchCache.get(`match:${matchId}`);
         if (cachedMatch) {
           socket.emit("matchState", cachedMatch);
@@ -291,6 +300,17 @@ if (!process.env.VERCEL) {
           } catch (err) {
             console.warn("[rejoin-match] Failed to fetch match:", err.message);
           }
+        }
+      }
+    });
+
+    socket.on("disconnecting", () => {
+      for (const room of socket.rooms) {
+        if (room.startsWith("match:")) {
+          const matchId = room.split(":")[1];
+          setTimeout(() => {
+            broadcastActiveViewers(matchId);
+          }, 200);
         }
       }
     });

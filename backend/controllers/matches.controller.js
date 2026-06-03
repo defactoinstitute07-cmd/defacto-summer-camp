@@ -225,3 +225,26 @@ exports.deleteMatch = asyncHandler(async (req, res) => {
 
   sendSuccess(res, 200, "Match deleted.");
 });
+
+// PATCH /api/matches/:id/view
+exports.incrementMatchViews = asyncHandler(async (req, res) => {
+  const matchId = req.params.id;
+  const match = await Match.findByIdAndUpdate(
+    matchId,
+    { $inc: { views: 1 } },
+    { new: true }
+  );
+  if (!match) return sendError(res, 404, "Match not found.");
+
+  // Invalidate cache so that next fetch retrieves updated view count
+  matchCache.del(`match:${match._id}`);
+
+  // Broadcast the update via Socket.IO
+  const io = req.app.get("io");
+  if (io) {
+    io.to(`match:${match._id}`).emit("viewsUpdated", { views: match.views });
+  }
+
+  sendSuccess(res, 200, "Match views incremented.", { views: match.views });
+});
+

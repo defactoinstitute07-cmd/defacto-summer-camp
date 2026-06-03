@@ -60,6 +60,11 @@ const matchSchema = new mongoose.Schema(
       maxlength: [300, "Notes cannot exceed 300 characters"],
       default: "",
     },
+    views: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     sets: [
       {
         scoreA: { type: Number, default: 0 },

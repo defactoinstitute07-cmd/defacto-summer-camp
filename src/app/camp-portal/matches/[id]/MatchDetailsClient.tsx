@@ -871,24 +871,28 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
 {/* Clean & Responsive App Footer */}
 <footer className="mt-12 pt-8 pb-10 border-t border-slate-200/60 text-center">
   <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 px-4 max-w-3xl mx-auto">
-    
-    {/* Defacto Institute Button */}
-    <a 
-      href="https://www.defactoinstitute.in/" 
-      className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 bg-[#0B1C4A] text-[#FACC15] rounded-xl hover:bg-[#FACC15] hover:text-[#0B1C4A] shadow-md hover:shadow-xl border-2 border-[#0B1C4A]"
-    >
-      Visit - Defacto Institute Website
-    </a>
-    
-    {/* Summer Camp Button */}
-    <a 
-      href="https://summercamp.defactoinstitute.in/" 
-      className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-wider text-white transition-all duration-300 bg-[#E60000] rounded-xl hover:bg-[#0B1C4A] shadow-[0_4px_0_#FACC15] hover:shadow-[0_6px_0_#FACC15] hover:-translate-y-0.5 active:translate-y-1 active:shadow-[0_0px_0_#FACC15]"
-    >
-      Visit - Summer Camp Website
-    </a>
-    
-  </div>
+
+  {/* Defacto Institute Button */}
+  <a
+    href="https://defactoinstitute.in/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 bg-[#0B1C4A] text-[#FACC15] rounded-xl hover:bg-[#FACC15] hover:text-[#0B1C4A] shadow-md hover:shadow-xl border-2 border-[#0B1C4A]"
+  >
+    Visit - Defacto Institute Website
+  </a>
+
+  {/* Summer Camp Button */}
+  <a
+    href="https://summercamp.defactoinstitute.in/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-wider text-white transition-all duration-300 bg-[#E60000] rounded-xl hover:bg-[#0B1C4A] shadow-[0_4px_0_#FACC15] hover:shadow-[0_6px_0_#FACC15] hover:-translate-y-0.5 active:translate-y-1 active:shadow-[0_0px_0_#FACC15]"
+  >
+    Visit - Summer Camp Website
+  </a>
+
+</div>
 
   {/* Optional: Simple Copyright / Tagline */}
   <div className="mt-10 flex flex-col items-center gap-2">

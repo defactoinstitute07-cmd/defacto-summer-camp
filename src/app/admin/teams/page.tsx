@@ -32,6 +32,29 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
+const PRESET_COLORS = [
+  "#E60000", // Crimson Red
+  "#0C2340", // Navy Blue
+  "#0070F3", // Electric Blue
+  "#00A3FF", // Sky Blue
+  "#00B5AD", // Teal
+  "#21BA45", // Grass Green
+  "#059669", // Emerald Green
+  "#B5CC18", // Lime Green
+  "#D97706", // Amber Orange
+  "#F59E0B", // Bright Yellow
+  "#EF4444", // Tomato Red
+  "#F43F5E", // Rose Pink
+  "#EC4899", // Magenta
+  "#A333C8", // Purple
+  "#8B5CF6", // Violet
+  "#6366F1", // Indigo
+  "#1E293B", // Dark Slate
+  "#64748B", // Steel Gray
+  "#78350F", // Bronze Brown
+  "#14B8A6"  // Turquoise
+];
+
 export default function TeamsPage() {
   const { admin } = useAdminAuth();
   const [sports, setSports] = useState<string[]>([]);
@@ -392,6 +415,29 @@ export default function TeamsPage() {
               <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-1.5">
                 Team Color *
               </label>
+
+              {/* Color Swatch Presets Picker */}
+              <div className="grid grid-cols-10 gap-2 mb-3 bg-slate-50 p-3 border border-slate-200/60 rounded-xl max-h-24 overflow-y-auto shadow-inner">
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, color: c }))}
+                    className={`h-7 w-full rounded-lg border-2 transition-all cursor-pointer relative hover:scale-110 active:scale-90 ${
+                      form.color.toLowerCase() === c.toLowerCase()
+                        ? "border-[#E60000] scale-110 shadow-[0_0_8px_rgba(230,0,0,0.4)] z-10"
+                        : "border-transparent hover:border-slate-300"
+                    }`}
+                    style={{ backgroundColor: c }}
+                    title={c}
+                  >
+                    {form.color.toLowerCase() === c.toLowerCase() && (
+                      <span className="absolute inset-0 m-auto w-1.5 h-1.5 bg-white rounded-full border border-black/20" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex gap-3 items-center">
                 <input
                   type="color"

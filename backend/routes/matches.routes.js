@@ -13,6 +13,8 @@ const validation = [
   body("scoreA").optional().isInt({ min: 0 }).withMessage("Score A must be >= 0."),
   body("scoreB").optional().isInt({ min: 0 }).withMessage("Score B must be >= 0."),
   body("maxPoints").optional().isInt({ min: 0 }).withMessage("Maximum points must be >= 0."),
+  body("baseViews").optional().isInt({ min: 0 }).withMessage("Base views must be >= 0."),
+  body("baseActive").optional().isInt({ min: 0 }).withMessage("Base active viewers must be >= 0."),
 ];
 
 // Public

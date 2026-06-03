@@ -256,11 +256,23 @@ if (!process.env.VERCEL) {
   io.on("connection", (socket) => {
     console.log(`📡 Socket connected: ${socket.id}`);
 
-    const broadcastActiveViewers = (matchId) => {
+    const broadcastActiveViewers = async (matchId) => {
       if (!matchId) return;
       const room = io.sockets.adapter.rooms.get(`match:${matchId}`);
       const activeCount = room ? room.size : 0;
-      io.to(`match:${matchId}`).emit("activeViewers", { count: activeCount });
+      
+      let baseActive = 0;
+      try {
+        const Match = require("./models/Match");
+        const match = await Match.findById(matchId).select("baseActive");
+        if (match && typeof match.baseActive === "number") {
+          baseActive = match.baseActive;
+        }
+      } catch (err) {
+        console.warn("[broadcastActiveViewers] Failed to fetch baseActive:", err.message);
+      }
+
+      io.to(`match:${matchId}`).emit("activeViewers", { count: activeCount + baseActive });
     };
 
     // Allow scoreboards or admins to join match-specific rooms

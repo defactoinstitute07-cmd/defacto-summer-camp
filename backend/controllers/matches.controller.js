@@ -175,7 +175,7 @@ exports.updateMatch = asyncHandler(async (req, res) => {
     return sendError(res, 403, "Access denied.");
   }
 
-  const fields = ["sport", "teamA", "teamB", "scoreA", "scoreB", "date", "round", "status", "winner", "notes", "sets", "timeline", "maxPoints"];
+  const fields = ["sport", "teamA", "teamB", "scoreA", "scoreB", "date", "round", "status", "winner", "notes", "sets", "timeline", "maxPoints", "baseViews", "baseActive"];
   fields.forEach((f) => {
     if (req.body[f] !== undefined) match[f] = req.body[f];
   });
@@ -205,6 +205,11 @@ exports.updateMatch = asyncHandler(async (req, res) => {
 
     io.to(`match:${match._id}`).emit("matchUpdated", match);
     io.emit("scoreUpdated", match);
+
+    // Re-broadcast active viewers count to room in case baseActive was updated
+    const room = io.sockets.adapter.rooms.get(`match:${match._id}`);
+    const activeCount = room ? room.size : 0;
+    io.to(`match:${match._id}`).emit("activeViewers", { count: activeCount + (match.baseActive || 0) });
   }
 
   sendSuccess(res, 200, "Match updated.", match);

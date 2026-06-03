@@ -51,6 +51,8 @@ interface Match {
   timeline?: TimelineEvent[];
   maxPoints?: number;
   views?: number;
+  baseViews?: number;
+  baseActive?: number;
 }
 
 interface MatchDetailsResponse {
@@ -136,6 +138,8 @@ const normalizeMatchDetails = (value: unknown): MatchDetailsResponse | null => {
         })),
       maxPoints,
       views: typeof rawMatch.views === "number" ? rawMatch.views : 0,
+      baseViews: typeof rawMatch.baseViews === "number" ? rawMatch.baseViews : 0,
+      baseActive: typeof rawMatch.baseActive === "number" ? rawMatch.baseActive : 0,
     },
     teamALogo: stringValue(payload.teamALogo),
     teamBLogo: stringValue(payload.teamBLogo),
@@ -159,7 +163,9 @@ const createFallbackData = (): MatchDetailsResponse => ({
     notes: "",
     sets: [],
     timeline: [],
-    views: 0
+    views: 0,
+    baseViews: 0,
+    baseActive: 0
   },
   teamALogo: "",
   teamBLogo: "",
@@ -559,7 +565,7 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
     <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 border border-slate-200 rounded-xl shadow-sm text-slate-600">
       <Eye className="w-3.5 h-3.5" />
       <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-        {match.views || 0} Views
+        {(match.views || 0) + (match.baseViews || 0)} Views
       </span>
     </div>
   </div>
@@ -657,19 +663,26 @@ export default function MatchDetailsClient({ matchId }: { matchId: string }) {
     </div>
 
     {/* Center Scores */}
-    <div className="flex items-center gap-2 sm:gap-3 px-4 shrink-0 font-display select-none">
-      {match.status === "upcoming" ? (
-        <span className="text-slate-300 font-black text-xl sm:text-2xl uppercase tracking-widest">VS</span>
-      ) : (
-        <>
-          <span className="text-3xl sm:text-5xl font-black tracking-tight" style={{ color: colorA }}>
-            {match.scoreA}
-          </span>
-          <span className="text-slate-300 text-xl sm:text-3xl font-light">—</span>
-          <span className="text-3xl sm:text-5xl font-black tracking-tight" style={{ color: colorB }}>
-            {match.scoreB}
-          </span>
-        </>
+    <div className="flex flex-col items-center gap-1 shrink-0 font-display select-none">
+      <div className="flex items-center gap-2 sm:gap-3 px-4">
+        {match.status === "upcoming" ? (
+          <span className="text-slate-300 font-black text-xl sm:text-2xl uppercase tracking-widest">VS</span>
+        ) : (
+          <>
+            <span className="text-3xl sm:text-5xl font-black tracking-tight" style={{ color: colorA }}>
+              {match.scoreA}
+            </span>
+            <span className="text-slate-300 text-xl sm:text-3xl font-light">—</span>
+            <span className="text-3xl sm:text-5xl font-black tracking-tight" style={{ color: colorB }}>
+              {match.scoreB}
+            </span>
+          </>
+        )}
+      </div>
+      {match.maxPoints !== undefined && match.maxPoints > 0 && (
+        <span className="text-[9px] sm:text-[10px] font-black tracking-wider text-slate-400 bg-slate-100 border border-slate-200/60 rounded-full px-2.5 py-0.5 mt-1.5 uppercase">
+          First to {match.maxPoints} Points
+        </span>
       )}
     </div>
 

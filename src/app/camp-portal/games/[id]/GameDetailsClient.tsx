@@ -45,6 +45,7 @@ interface Match {
   status: "upcoming" | "live" | "paused" | "completed";
   winner: string;
   notes: string;
+  maxPoints?: number;
 }
 
 interface PointsEntry {
@@ -405,9 +406,16 @@ export default function GameDetailsClient({ gameId }: { gameId: string }) {
 
   {/* Card Header (Round & Date) */}
   <div className="flex items-center justify-between mb-4">
-    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-      {m.round}
-    </span>
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+        {m.round}
+      </span>
+      {m.maxPoints !== undefined && m.maxPoints > 0 && (
+        <span className="text-[9px] font-extrabold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded uppercase">
+          {m.maxPoints} pts
+        </span>
+      )}
+    </div>
     <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
       <Clock className="w-3.5 h-3.5 text-slate-300" />
       {formatDate(m.date)}

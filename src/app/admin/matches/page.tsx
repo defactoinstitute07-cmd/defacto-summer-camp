@@ -20,6 +20,8 @@ interface Match {
   sets?: SetScore[];
   timeline?: TimelineEvent[];
   maxPoints?: number;
+  baseViews?: number;
+  baseActive?: number;
 }
 
 function getContrastColor(hexColor: string) {
@@ -33,13 +35,18 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
+const getLocalDatetimeString = () => {
+  const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+  return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+};
+
 const emptyForm = {
   sport: "",
   teamA: "",
   teamB: "",
   scoreA: 0,
   scoreB: 0,
-  date: new Date().toISOString().slice(0,16),
+  date: getLocalDatetimeString(),
   round: "Group Stage",
   status: "upcoming",
   winner: "",
@@ -47,6 +54,8 @@ const emptyForm = {
   sets: [] as SetScore[],
   timeline: [] as TimelineEvent[],
   maxPoints: 0,
+  baseViews: 0,
+  baseActive: 0,
 };
 const statusColor: Record<string,string> = {
   live: "bg-green-500 text-white border border-green-400 shadow-[0_2px_6px_rgba(34,197,94,0.3)] animate-pulse font-black uppercase text-[9px] tracking-wider",
@@ -156,7 +165,7 @@ export default function MatchesPage() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ ...emptyForm, sport: sports[0] || "" });
+    setForm({ ...emptyForm, sport: sports[0] || "", date: getLocalDatetimeString() });
     setError("");
     setShowForm(true);
   };
@@ -168,7 +177,11 @@ export default function MatchesPage() {
       teamB: m.teamB,
       scoreA: m.scoreA,
       scoreB: m.scoreB,
-      date: new Date(m.date).toISOString().slice(0, 16),
+      date: (() => {
+        const d = new Date(m.date);
+        const tzoffset = d.getTimezoneOffset() * 60000;
+        return (new Date(d.getTime() - tzoffset)).toISOString().slice(0, 16);
+      })(),
       round: m.round,
       status: m.status,
       winner: m.winner,
@@ -176,6 +189,8 @@ export default function MatchesPage() {
       sets: m.sets || [],
       timeline: m.timeline || [],
       maxPoints: m.maxPoints || 0,
+      baseViews: m.baseViews || 0,
+      baseActive: m.baseActive || 0,
     });
     setError("");
     setShowForm(true);
@@ -310,6 +325,46 @@ export default function MatchesPage() {
     }
   };
 
+  const handleImmediateBaseUpdate = async (field: "baseViews" | "baseActive", val: number) => {
+    if (!editing) return;
+    try {
+      const updatedForm = { ...form, [field]: val };
+      setForm(updatedForm);
+      const res = await adminFetch(`/matches/${editing._id}`, {
+        method: "PUT",
+        body: JSON.stringify(updatedForm),
+      });
+      if (res.success) load();
+    } catch (err: any) {
+      setError(err.message || "Failed to update baseline.");
+    }
+  };
+
+  const handleImmediateMaxPointsUpdate = async (val: number) => {
+    if (!editing) return;
+    try {
+      // Automatically end match if score reaches/exceeds new maxPoints
+      let updatedStatus = form.status;
+      let updatedWinner = form.winner;
+      if (val > 0) {
+        if (form.scoreA >= val || form.scoreB >= val) {
+          updatedStatus = "completed";
+          updatedWinner = form.scoreA >= val ? "teamA" : "teamB";
+        }
+      }
+
+      const updatedForm = { ...form, maxPoints: val, status: updatedStatus, winner: updatedWinner };
+      setForm(updatedForm);
+      const res = await adminFetch(`/matches/${editing._id}`, {
+        method: "PUT",
+        body: JSON.stringify(updatedForm),
+      });
+      if (res.success) load();
+    } catch (err: any) {
+      setError(err.message || "Failed to update maximum points.");
+    }
+  };
+
   const handleImmediateTimelineUpdate = async (eventText: string) => {
     if (!editing) return;
     try {
@@ -397,10 +452,15 @@ export default function MatchesPage() {
           {filtered.map(m => (
             <div key={m._id} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-200">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="text-slate-400 text-xs font-bold uppercase">{m.sport}</span>
                   <span className={`px-2 py-0.5 rounded-full border ${statusColor[m.status]}`}>{m.status}</span>
                   <span className="text-slate-400 text-xs">{m.round}</span>
+                  {m.maxPoints !== undefined && m.maxPoints > 0 && (
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[9px] font-black uppercase tracking-wider">
+                      {m.maxPoints} Points Match
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-slate-800 font-bold truncate">{m.teamA}</span>
@@ -584,6 +644,28 @@ export default function MatchesPage() {
               </button>
             </div>
 
+            {/* Maximum Points Input in Live console */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm mt-3">
+              <label className="block text-slate-500 text-[10px] font-black uppercase tracking-wider mb-2">Maximum Points Limit</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Set max points (0 for no limit)"
+                  value={form.maxPoints || 0}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    f("maxPoints", val);
+                    handleImmediateMaxPointsUpdate(val);
+                  }}
+                  className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-slate-400"
+                />
+                <div className="px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 text-[10px] font-bold uppercase flex items-center justify-center min-w-24">
+                  {form.maxPoints > 0 ? `Target: ${form.maxPoints}` : "No Limit"}
+                </div>
+              </div>
+            </div>
+
             {/* Set Scores Matrix Tracker */}
             <div className="border-t border-slate-200/60 pt-4">
               <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Set Scores Matrix</label>
@@ -647,6 +729,41 @@ export default function MatchesPage() {
               >
                 + Add Set Score
               </button>
+            </div>
+
+            {/* Baseline Settings for Live match */}
+            <div className="border-t border-slate-200/60 pt-4 mt-4">
+              <label className="block text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Base Views & Active Viewers</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Base Views</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.baseViews || 0}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      f("baseViews", val);
+                      handleImmediateBaseUpdate("baseViews", val);
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-slate-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Base Live</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.baseActive || 0}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      f("baseActive", val);
+                      handleImmediateBaseUpdate("baseActive", val);
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-slate-400"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -809,6 +926,11 @@ export default function MatchesPage() {
           </div>
           
           <TextField label="Notes / Information" value={form.notes} onChange={v => f("notes",v)} />
+          
+          <div className="grid grid-cols-2 gap-3">
+            <TextField label="Base Views Count" type="number" value={String(form.baseViews || 0)} onChange={v => f("baseViews",Number(v))} />
+            <TextField label="Base Live Viewers" type="number" value={String(form.baseActive || 0)} onChange={v => f("baseActive",Number(v))} />
+          </div>
         </div>
 
         {/* Right Column: Referee Controllers & Matrices */}

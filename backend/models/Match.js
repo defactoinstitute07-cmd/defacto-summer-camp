@@ -65,6 +65,16 @@ const matchSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    baseViews: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    baseActive: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     sets: [
       {
         scoreA: { type: Number, default: 0 },
